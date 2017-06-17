@@ -71,7 +71,7 @@ void AppWindow::style()
 void AppWindow::resizeEvent(QResizeEvent *)
 {
 
-    setWidgetBorderRadius(container,12);
+    setWidgetBorderRadius(this,12);
 }
 
 

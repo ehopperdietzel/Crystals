@@ -8,12 +8,6 @@ int main(int argc, char *argv[])
 
     QApplication a(argc, argv);
     a.setAttribute(Qt::AA_EnableHighDpiScaling);
-
-
-    QWidget *background = new QWidget();
-    background->setGeometry(a.desktop()->geometry());
-    background->setStyleSheet("background:white");
-    background->show();
     a.installNativeEventFilter(new Events());
 
     XSelectInput(QX11Info::display(), QX11Info::appRootWindow(QX11Info::appScreen()),
