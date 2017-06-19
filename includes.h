@@ -1,5 +1,7 @@
 #include <QApplication>
+#include <QObject>
 #include <QAbstractNativeEventFilter>
+#include <QGraphicsDropShadowEffect>
 #include <QX11Info>
 #include <QDesktopWidget>
 #include <QResizeEvent>

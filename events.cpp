@@ -1,5 +1,4 @@
 #include "events.h"
-#include "appwindow.h"
 
 //Constructor
 
@@ -21,8 +20,18 @@ bool Events::nativeEventFilter(const QByteArray &eventType, void *message, long 
             //Parseas el evento especifico
             xcb_map_request_event_t *mapRequest = (xcb_map_request_event_t*)event;
 
-            //Lo embedas en una ventana de Cuarzo
-            AppWindow *newWin = new AppWindow(mapRequest->window);
+            windowManager->mapAppWindow(mapRequest->window);
+
+            return true;
+        }
+
+        //Resize request ( Una aplicacion quiere cambiar de tamaño )
+        if(event->response_type == XCB_RESIZE_REQUEST)
+        {
+            //Parseas el evento especifico
+            xcb_resize_request_event_t *resizeRequest = (xcb_resize_request_event_t*)event;
+
+            windowManager->resizeAppWindow(resizeRequest->window,resizeRequest->width,resizeRequest->height);
 
             return true;
         }
@@ -30,3 +39,5 @@ bool Events::nativeEventFilter(const QByteArray &eventType, void *message, long 
     }
     return false;
 }
+
+

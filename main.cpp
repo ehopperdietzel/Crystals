@@ -5,7 +5,7 @@
 int main(int argc, char *argv[])
 {
     //Reajusta el tamaño de los elementos
-    qputenv("QT_AUTO_SCREEN_SCALE_FACTOR","1");
+    //qputenv("QT_AUTO_SCREEN_SCALE_FACTOR","1");
 
     QApplication a(argc, argv);
 

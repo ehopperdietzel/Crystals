@@ -16,13 +16,17 @@ SOURCES += \
         main.cpp \
     events.cpp \
     appwindow.cpp \
-    topbarbutton.cpp
+    topbarbutton.cpp \
+    windowmanager.cpp \
+    appwindowtitlebar.cpp
 
 HEADERS += \
     events.h \
     includes.h \
     appwindow.h \
-    topbarbutton.h
+    topbarbutton.h \
+    windowmanager.h \
+    appwindowtitlebar.h
 
 RESOURCES += \
     resources.qrc
