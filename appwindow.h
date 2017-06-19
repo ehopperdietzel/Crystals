@@ -4,29 +4,34 @@
 #include "includes.h"
 #include "topbarbutton.h"
 
+//Esta clase es para crear contenedores ( Ventanas ) para las aplicaciones graficas que se ejecuten.
 
 class AppWindow : public QFrame
 {
 public:
     AppWindow(xcb_window_t _client);
 
+    //Separa la ventana del topbar
     QBoxLayout *mainLayout = new QBoxLayout(QBoxLayout::TopToBottom,this);
-    QFrame *container = new QFrame();
 
+    //Ventana cliente
+    QWindow *win;
+
+    //Contenedor de la ventana
     QWidget *window = new QWidget();
-    int client;
 
-    QWidget *right = new QWidget(this);
+    //Elementos del top bar
     QFrame *topBar = new QFrame();
     QLabel *title = new QLabel();
-
-    QBoxLayout *divider = new QBoxLayout(QBoxLayout::TopToBottom,container);
+    TopBarButton *cloBtn = new TopBarButton(":/img/window/cloWin.png",":/img/window/cloWin_A.png",QSize(10,10));
+    TopBarButton *minBtn = new TopBarButton(":/img/window/minWin.png",":/img/window/minWin_A.png",QSize(10,10));
+    TopBarButton *expBtn = new TopBarButton(":/img/window/expWin.png",":/img/window/expWin_A.png",QSize(10,10));
     QBoxLayout *topBarLayout = new QBoxLayout(QBoxLayout::LeftToRight,topBar);
 
-    TopBarButton *cloBtn = new TopBarButton(":res/img/cloWin.png",":res/img/cloWin_A.png",QSize(12,12));
-    TopBarButton *minBtn = new TopBarButton(":res/img/minWin.png",":res/img/minWin_A.png",QSize(14,14));
-    TopBarButton *expBtn = new TopBarButton(":res/img/expWin.png",":res/img/expWin_A.png",QSize(14,14));
+    //Win ID del cliente
+    int client;
 
+    //Almacena variables para mover la ventana
     QPoint prevWin;
     QPoint prevCur;
     bool pressed = false;

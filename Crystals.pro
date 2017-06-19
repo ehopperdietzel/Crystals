@@ -14,14 +14,15 @@ LIBS += -lX11
 
 SOURCES += \
         main.cpp \
-        crystals.cpp \
     events.cpp \
     appwindow.cpp \
     topbarbutton.cpp
 
 HEADERS += \
-        crystals.h \
     events.h \
     includes.h \
     appwindow.h \
     topbarbutton.h
+
+RESOURCES += \
+    resources.qrc

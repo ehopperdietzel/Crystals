@@ -1,34 +1,52 @@
 #include "appwindow.h"
-#include <QRegion>
-#include <QGraphicsDropShadowEffect>
 
 AppWindow::AppWindow(xcb_window_t _client)
 {
+    //Almacena el WinID para usos futuros
     client = _client;
 
-    QWindow *win = QWindow::fromWinId(client);
-    window = QWidget::createWindowContainer(win);
-    window->setFixedSize(500, 500);
+    //Mapea el cliente en un QWindow
+    win = QWindow::fromWinId(client);
 
-    style(); //SETUP VIEW
+    //Se crea un conetedor para el QWindow
+    window = QWidget::createWindowContainer(win);
+
+    //Obtienes los atributos del cliente y se almacenan en attr.
+    XWindowAttributes attr;
+    XGetWindowAttributes(QX11Info::display(), client, &attr);
+    int _x = attr.x;
+    int _y = attr.y;
+    int _w = attr.width;
+    int _h = attr.height;
+
+    if(_w < 300 || _h < 300){
+        window->setFixedSize(500,500);
+    }
+    else{
+        window->setFixedSize(_w,_h);
+    }
+    move(_x,_y + 30);
+    XMoveResizeWindow(QX11Info::display(),client,0,0,_w,_h);
+
+    //Configura los estilos
+    style();
 }
 
 void AppWindow::style()
 {
-    QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect(this);
+    //Fondo transparente
     setAttribute(Qt::WA_TranslucentBackground);
-    shadow->setBlurRadius(40);
-    shadow->setColor(Qt::black);
-    setGraphicsEffect(shadow);
-    setPalette(Qt::transparent);
-    setStyleSheet("AppWindow{border-radius:50}");
-    setAutoFillBackground(false);
+
+    //Obtener eventos
     setMouseTracking(true);
     installEventFilter(this);
+
     window->installEventFilter(this);
     window->setMouseTracking(true);
 
-    mainLayout->addWidget(container);
+    mainLayout->addWidget(topBar);
+    mainLayout->addWidget(window,1);
+    mainLayout->setSpacing(0);
     mainLayout->setMargin(0);
 
     topBarLayout->addWidget(cloBtn);
@@ -42,38 +60,23 @@ void AppWindow::style()
     title->setText("Terminal");
     title->setAlignment(Qt::AlignCenter);
 
-    topBar->setFixedHeight(30);
+    topBar->setFixedHeight(40);
     topBar->setObjectName("TB");
-    topBar->setStyleSheet("#TB{background:#FAFAFA;border-top-left-radius:12px;border-top-right-radius:12px}");
+    topBar->setStyleSheet("#TB{background:#FAFAFA;border-top-left-radius:8px;border-top-right-radius:8px;font-size:15px}");
     topBar->installEventFilter(this);
 
     window->setObjectName("WD");
-    window->setStyleSheet("#WD{background:#FAFAFA;border-radius:12px}");
-
-
-    container->setObjectName("CT");
-    container->setStyleSheet("#CT{background:#FAFAFA;border-radius:12px}");
-
-    divider->setMargin(0);
-    divider->setSpacing(0);
-    divider->addWidget(topBar);
-    divider->addWidget(window,1);
-
-    //right->setFixedWidth(100);
-    //right->setAttribute(Qt::WA_Hover);
-    //right->show();
-    //right->installEventFilter(this);
+    window->setStyleSheet("#WD{background:#FAFAFA}");
 
     cloBtn->installEventFilter(this);
+
     show();
 }
 
 void AppWindow::resizeEvent(QResizeEvent *)
 {
-
-    setWidgetBorderRadius(this,12);
+    //setWidgetBorderRadius(this,12);
 }
-
 
 void AppWindow::setWidgetBorderRadius(QWidget *w,int radius) {
 
@@ -85,6 +88,7 @@ void AppWindow::setWidgetBorderRadius(QWidget *w,int radius) {
     painter.drawRoundedRect(0,0,w->width(),w->height(),0,8,Qt::AbsoluteSize);
     QPixmap mask = QPixmap::fromImage(alpha);
     w->setMask(mask.mask());
+
 }
 
 
@@ -99,10 +103,7 @@ bool AppWindow::eventFilter(QObject *watched, QEvent *event)
 
     if(event->type() == QEvent::HoverEnter)
     {
-        if( watched == right)
-        {
-            setCursor(Qt::SizeHorCursor);
-        }
+        //blabla
     }
 
     if(event->type() == QEvent::MouseButtonPress)
