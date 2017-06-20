@@ -13,7 +13,6 @@ AppWindowTitleBar::AppWindowTitleBar()
     title->setAlignment(Qt::AlignCenter);
     title->setText("Terminal");
 
-    setFixedHeight(30);
     setObjectName("TB");
     setStyleSheet("#TB{background:#FAFAFA;border-top-left-radius:8px;border-top-right-radius:8px;font-size:25px}");
 }

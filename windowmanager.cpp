@@ -2,16 +2,9 @@
 
 WindowManager::WindowManager()
 {
-    connect(QApplication::desktop(),SIGNAL(resized(int)),this,SLOT(resolutionChanged()));
+
 }
 
-void WindowManager::resolutionChanged()
-{
-    foreach (AppWindow *win, appWindows)
-    {
-        win->changeResolution();
-    }
-}
 
 void WindowManager::mapAppWindow(int wid)
 {

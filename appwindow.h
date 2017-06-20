@@ -2,6 +2,7 @@
 #define APPWINDOW_H
 
 #include "includes.h"
+#include "huincha.h"
 #include "appwindowtitlebar.h"
 
 
@@ -37,6 +38,8 @@ public:
     //Sombra
     QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect(container);
 
+    //Utilidades
+    Huincha huincha;
 
     //Win ID del cliente
     int client;
@@ -57,8 +60,8 @@ public:
     bool eventFilter(QObject *watched, QEvent *event);
 
 public slots:
+    void fixedSizes();
     void closeWindow();
-    void changeResolution();
 };
 
 #endif // APPWINDOW_H

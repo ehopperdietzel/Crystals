@@ -26,7 +26,8 @@ HEADERS += \
     appwindow.h \
     topbarbutton.h \
     windowmanager.h \
-    appwindowtitlebar.h
+    appwindowtitlebar.h \
+    huincha.h
 
 RESOURCES += \
     resources.qrc

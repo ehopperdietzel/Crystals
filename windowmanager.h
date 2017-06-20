@@ -14,7 +14,6 @@ public:
 signals:
 
 public slots:
-    void resolutionChanged();
     void mapAppWindow(int wid);
     void resizeAppWindow(int wid, int width, int height);
 };

@@ -4,23 +4,18 @@ AppWindow::AppWindow(xcb_window_t _client)
 {
 
     //Almacena el WinID para usos futuros
-
     client = _client;
 
     //Le dice al server que eventos quieres escuchar
-
     XSelectInput(QX11Info::display(),_client, KeyPressMask | KeyReleaseMask |  ButtonPressMask | ButtonReleaseMask | KeymapStateMask | ButtonMotionMask | PointerMotionMask |  EnterWindowMask | LeaveWindowMask |  FocusChangeMask |  VisibilityChangeMask |  ExposureMask | StructureNotifyMask | SubstructureRedirectMask | SubstructureNotifyMask );
 
     //Mapea el cliente en un QWindow
-
     win = QWindow::fromWinId(client);
 
     //Se crea un conetedor para el QWindow
-
     window = QWidget::createWindowContainer(win);
 
     //Obtienes los atributos del cliente y se almacenan en attr.
-
     XWindowAttributes attr;
 
     XGetWindowAttributes(QX11Info::display(), client, &attr);
@@ -30,11 +25,13 @@ AppWindow::AppWindow(xcb_window_t _client)
     int _w = attr.width;
     int _h = attr.height;
 
-    if(_w < 300 || _h < 300){
+    if(_w < 300 || _h < 300)
+    {
         QSize sSize = QApplication::desktop()->size();
         window->setFixedSize(sSize.width()/2,sSize.height()/2);
     }
-    else{
+    else
+    {
         window->setFixedSize(_w,_h);
     }
 
@@ -46,9 +43,52 @@ AppWindow::AppWindow(xcb_window_t _client)
 
     //Configura los estilos
     style();
+
+    //Detecta cambio de resolucion
+    connect(QApplication::primaryScreen(),SIGNAL(geometryChanged(QRect)),this,SLOT(fixedSizes()));
 }
 
-void AppWindow::resizeReq(int w, int h)
+
+
+void AppWindow::style() //Añade los estilos a todos los elementos
+{
+    //Fondo transparente
+    setAttribute(Qt::WA_TranslucentBackground);
+
+    //Obtener eventos
+    installEventFilter(this);
+    titleBar->installEventFilter(this);
+
+    //Ajusta el layout principal, con margin para que se vea el drop shadow
+    mainLayout->addWidget(container);
+
+    //Ajusta el layout que separa la barra de titulo con la ventana
+    containerLayout->addWidget(titleBar);
+    containerLayout->addWidget(window,1);
+    containerLayout->setMargin(0);
+    containerLayout->setSpacing(0);
+
+    //Añade fondo a la ventana visible
+    container->setObjectName("WD");
+
+    shadow->setColor(QColor(0,0,0,30));
+    container->setGraphicsEffect(shadow);
+
+    //Asigna los tamaños en relacion a la resolucion de la pantalla
+    fixedSizes();
+    show();
+}
+
+void AppWindow::fixedSizes() //Asigna los tamaños en relacion a la resolucion de la pantalla
+{
+    titleBar->setFixedHeight(huincha.relativeHeight(5));
+    container->setStyleSheet("#WD{background:#FAFAFA;border-top-left-radius:7px;border-top-right-radius:7px;border:1px solid #CCC}");
+    mainLayout->setContentsMargins(8,0,8,8);
+    shadow->setBlurRadius(15);
+    shadow->setOffset(0,4);
+}
+
+void AppWindow::resizeReq(int w, int h) //El cliente desea cambiar de tamaño
 {
     if(w < 300){
         container->setFixedWidth(300);
@@ -65,43 +105,10 @@ void AppWindow::resizeReq(int w, int h)
     }
 }
 
-void AppWindow::style()
+
+void AppWindow::resizeEvent(QResizeEvent *) //Evento cuando la ventana cambia de tamaño.
 {
-    //Fondo transparente
-    setAttribute(Qt::WA_TranslucentBackground);
-
-    //Obtener eventos
-    setMouseTracking(true);
-    installEventFilter(this);
-    titleBar->installEventFilter(this);
-
-    //Ajusta el layout principal, con margin para que se vea el drop shadow
-    mainLayout->addWidget(container);
-    mainLayout->setMargin(20);
-
-    //Ajusta el layout que separa la barra de titulo con la ventana
-    containerLayout->addWidget(titleBar);
-    containerLayout->addWidget(window,1);
-    containerLayout->setMargin(0);
-    containerLayout->setSpacing(0);
-
-    //Añade fondo a la ventana visible
-    container->setObjectName("WD");
-    container->setStyleSheet("#WD{background:#FAFAFA;border-top-left-radius:8px;border-top-right-radius:8px;border:1px solid #AAA}");
-
-    shadow->setBlurRadius(25);
-    shadow->setColor(QColor(0,0,0,100));
-    shadow->setOffset(5,5);
-    container->setGraphicsEffect(shadow);
-
-    show();
-}
-
-void AppWindow::resizeEvent(QResizeEvent *)
-{
-    QSize screenSize = QApplication::desktop()->size();
-    perSize = QSize((float)100 / (float)screenSize.width() * (float)width()  , (float)100 / (float)screenSize.height() * (float)height());
-    perPos = QPoint((float)100 / (float)screenSize.width() * (float)pos().x(), (float)100 / (float)screenSize.height() * (float)pos().y());
+    setWidgetBorderRadius(window,8);
 }
 
 void AppWindow::setWidgetBorderRadius(QWidget *w,int radius) {
@@ -122,14 +129,6 @@ void AppWindow::closeWindow()
     delete this;
 }
 
-void AppWindow::changeResolution()
-{
-    QSize screenSize = QApplication::desktop()->size();
-    QSize newSize = QSize((float)screenSize.width() / (float)100  * (float)perSize.width()  , (float)screenSize.height() / (float)100  * (float)perSize.height() );
-    QPoint newPos = QPoint((float)screenSize.width() / (float)100  * (float)perPos.x()       , (float)screenSize.height() / (float)100  * (float)perPos.y());
-    resize(newSize);
-    move(newPos);
-}
 
 bool AppWindow::eventFilter(QObject *watched, QEvent *event)
 {
@@ -142,6 +141,7 @@ bool AppWindow::eventFilter(QObject *watched, QEvent *event)
     if(event->type() == QEvent::MouseButtonPress)
     {
         raise();
+        fixedSizes();
 
         if( (watched == titleBar ) && !pressed)
         {
