@@ -4,13 +4,19 @@
 
 int main(int argc, char *argv[])
 {
-    //Reajusta el tamaño de los elementos
-    //qputenv("QT_AUTO_SCREEN_SCALE_FACTOR","1");
+    //Ajusta la densidad de pixeles
+    qputenv("QT_AUTO_SCREEN_SCALE_FACTOR","1");
 
     QApplication a(argc, argv);
 
+    //Identificador para QSettings
+    a.setOrganizationName("CuarzoSoftware");
+    a.setApplicationName("Crystals");
+
     //Soporte para pantallas retina
-    a.setAttribute(Qt::AA_EnableHighDpiScaling,true);
+    a.setAttribute(Qt::AA_UseHighDpiPixmaps);
+    a.setAttribute(Qt::AA_EnableHighDpiScaling);
+
 
     //Instala la clase abstracta de eventos nativos de X11
     a.installNativeEventFilter(new Events());
@@ -34,9 +40,12 @@ int main(int argc, char *argv[])
                  SubstructureNotifyMask
                  );
 
+
     //Inicia una terminal por defecto
     QProcess::startDetached("firmament");
     QProcess::startDetached("xterm");
+    QProcess::startDetached("gnome-terminal");
+
 
     return a.exec();
 }

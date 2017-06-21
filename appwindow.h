@@ -56,11 +56,9 @@ public:
 
     void style();
     void resizeEvent(QResizeEvent*);
-    void setWidgetBorderRadius(QWidget *,int radius);
     bool eventFilter(QObject *watched, QEvent *event);
 
 public slots:
-    void fixedSizes();
     void closeWindow();
 };
 

@@ -32,10 +32,11 @@ AppWindow::AppWindow(xcb_window_t _client)
     }
     else
     {
-        window->setFixedSize(_w,_h);
+        window->setFixedSize(_w/QApplication::primaryScreen()->devicePixelRatio(),_h/QApplication::primaryScreen()->devicePixelRatio());
     }
 
-    move(_x,_y + 30);
+    //move(_x,_y + 30);
+    move(50,50);
 
 
 
@@ -44,8 +45,6 @@ AppWindow::AppWindow(xcb_window_t _client)
     //Configura los estilos
     style();
 
-    //Detecta cambio de resolucion
-    connect(QApplication::primaryScreen(),SIGNAL(geometryChanged(QRect)),this,SLOT(fixedSizes()));
 }
 
 
@@ -61,6 +60,7 @@ void AppWindow::style() //Añade los estilos a todos los elementos
 
     //Ajusta el layout principal, con margin para que se vea el drop shadow
     mainLayout->addWidget(container);
+    mainLayout->setContentsMargins(8,4,8,8);
 
     //Ajusta el layout que separa la barra de titulo con la ventana
     containerLayout->addWidget(titleBar);
@@ -68,25 +68,23 @@ void AppWindow::style() //Añade los estilos a todos los elementos
     containerLayout->setMargin(0);
     containerLayout->setSpacing(0);
 
+
     //Añade fondo a la ventana visible
     container->setObjectName("WD");
 
+    //Estilo de la ventana
+    container->setStyleSheet("#WD{background:#FAFAFA;border-top-left-radius:7px;border-top-right-radius:7px;border:1px solid rgba(0,0,0,10)}");
+
+    //Crea la sombra
     shadow->setColor(QColor(0,0,0,30));
+    shadow->setBlurRadius(15);
+    shadow->setOffset(0,4);
     container->setGraphicsEffect(shadow);
 
-    //Asigna los tamaños en relacion a la resolucion de la pantalla
-    fixedSizes();
+    //Muestra la ventana
     show();
 }
 
-void AppWindow::fixedSizes() //Asigna los tamaños en relacion a la resolucion de la pantalla
-{
-    titleBar->setFixedHeight(huincha.relativeHeight(5));
-    container->setStyleSheet("#WD{background:#FAFAFA;border-top-left-radius:7px;border-top-right-radius:7px;border:1px solid #CCC}");
-    mainLayout->setContentsMargins(8,0,8,8);
-    shadow->setBlurRadius(15);
-    shadow->setOffset(0,4);
-}
 
 void AppWindow::resizeReq(int w, int h) //El cliente desea cambiar de tamaño
 {
@@ -108,22 +106,9 @@ void AppWindow::resizeReq(int w, int h) //El cliente desea cambiar de tamaño
 
 void AppWindow::resizeEvent(QResizeEvent *) //Evento cuando la ventana cambia de tamaño.
 {
-    setWidgetBorderRadius(window,8);
-}
-
-void AppWindow::setWidgetBorderRadius(QWidget *w,int radius) {
-    Q_UNUSED(radius); // Para detener las alertas de NO uso.
-
-    QImage alpha(QSize(w->width(),w->height()),QImage::Format_ARGB32);
-    alpha.fill(Qt::transparent);
-    QPainter painter(&alpha);
-    painter.setBrush(Qt::black);
-    painter.setRenderHint(QPainter::Antialiasing,true);
-    painter.drawRoundedRect(0,0,w->width(),w->height(),0,8,Qt::AbsoluteSize);
-    QPixmap mask = QPixmap::fromImage(alpha);
-    w->setMask(mask.mask());
 
 }
+
 
 void AppWindow::closeWindow()
 {
@@ -141,8 +126,8 @@ bool AppWindow::eventFilter(QObject *watched, QEvent *event)
 
     if(event->type() == QEvent::MouseButtonPress)
     {
+        //Eleva la ventana
         raise();
-        fixedSizes();
 
         if( (watched == titleBar ) && !pressed)
         {

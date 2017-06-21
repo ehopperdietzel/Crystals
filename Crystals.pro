@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui x11extras
+QT       += core gui x11extras network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -27,7 +27,8 @@ HEADERS += \
     topbarbutton.h \
     windowmanager.h \
     appwindowtitlebar.h \
-    huincha.h
+    huincha.h \
+    coreclient.h
 
 RESOURCES += \
     resources.qrc

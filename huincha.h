@@ -11,22 +11,25 @@ public:
 
     float relativeWidth(float percent)
     {
-        QRect screen = QApplication::primaryScreen()->geometry();
-        return (float)screen.width() / 100.0 * percent;
+        QSize screen = QApplication::primaryScreen()->geometry().size();
+        qreal dpi = QGuiApplication::primaryScreen()->logicalDotsPerInch();
+        return (float)screen.width()*dpi / (float)100.0 * percent;
     }
 
     float relativeHeight(float percent)
     {
-        QRect screen = QApplication::primaryScreen()->geometry();
-        return (float)screen.height() / 100.0 * percent;
+        QSize screen = QApplication::primaryScreen()->geometry().size();
+        qreal dpi = QGuiApplication::primaryScreen()->devicePixelRatio();
+        return ((float)screen.height() / (float)100.0 * percent)/dpi;
     }
 
     QSize relativeSize(float widthPercent,float heightPercent)
     {
-        QRect screen = QApplication::primaryScreen()->geometry();
+        QSize screen = QApplication::primaryScreen()->geometry().size();
+        qreal dpi = QGuiApplication::primaryScreen()->logicalDotsPerInch();
 
-        QSize newSize((float)screen.width() / 100.0 * widthPercent,
-                      (float)screen.height() / 100.0 * heightPercent);
+        QSize newSize((float)screen.width()*dpi / (float)100.0 * widthPercent,
+                      (float)screen.height()*dpi / (float)100.0 * heightPercent);
 
         return newSize;
     }
