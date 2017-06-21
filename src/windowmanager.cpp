@@ -16,7 +16,8 @@ WindowManager::WindowManager()
     else
     {
         //Inicia una terminal por defecto
-        QProcess::startDetached("gnome-terminal");
+        //QProcess::startDetached("gnome-terminal");
+        QProcess::startDetached("xterm");
 
     }
     connect(coreClient,SIGNAL(message(QString,QString)),this,SLOT(newCoreMessage(QString,QString)));
