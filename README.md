@@ -1,3 +1,3 @@
-#Crystals
+# Crystals
 
 CuarzoOS Window Manager.
