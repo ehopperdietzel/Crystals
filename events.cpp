@@ -8,6 +8,7 @@ Events::Events(){}
 
 bool Events::nativeEventFilter(const QByteArray &eventType, void *message, long *result)
 {
+    Q_UNUSED(result); // Para detener las alertas de NO uso.
     //Si es un evento de X11
     if(eventType == "xcb_generic_event_t")
     {

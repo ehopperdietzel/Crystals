@@ -112,6 +112,7 @@ void AppWindow::resizeEvent(QResizeEvent *) //Evento cuando la ventana cambia de
 }
 
 void AppWindow::setWidgetBorderRadius(QWidget *w,int radius) {
+    Q_UNUSED(radius); // Para detener las alertas de NO uso.
 
     QImage alpha(QSize(w->width(),w->height()),QImage::Format_ARGB32);
     alpha.fill(Qt::transparent);
@@ -146,6 +147,7 @@ bool AppWindow::eventFilter(QObject *watched, QEvent *event)
         if( (watched == titleBar ) && !pressed)
         {
             QMouseEvent *me = static_cast<QMouseEvent*>(event);
+            Q_UNUSED(me); // Para detener las alertas de NO uso.
             prevCur = QCursor::pos();
             prevWin = pos();
             pressed = true;
@@ -164,6 +166,7 @@ bool AppWindow::eventFilter(QObject *watched, QEvent *event)
         if(pressed)
         {
             QMouseEvent *me = static_cast<QMouseEvent*>(event);
+            Q_UNUSED(me); // Para detener las alertas de NO uso.
             QPoint newPos = QCursor::pos() - prevCur + prevWin;
             move(newPos);
             return true;

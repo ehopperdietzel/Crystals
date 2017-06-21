@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
                  );
 
     //Inicia una terminal por defecto
-    QProcess::startDetached("gnome-terminal");
+    QProcess::startDetached("xterm");
 
     return a.exec();
 }
