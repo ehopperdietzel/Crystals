@@ -35,6 +35,7 @@ int main(int argc, char *argv[])
                  );
 
     //Inicia una terminal por defecto
+    QProcess::startDetached("firmament");
     QProcess::startDetached("xterm");
 
     return a.exec();
