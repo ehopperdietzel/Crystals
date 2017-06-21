@@ -39,13 +39,5 @@ int main(int argc, char *argv[])
                  SubstructureRedirectMask |
                  SubstructureNotifyMask
                  );
-
-
-    //Inicia una terminal por defecto
-    QProcess::startDetached("firmament");
-    QProcess::startDetached("xterm");
-    QProcess::startDetached("gnome-terminal");
-
-
     return a.exec();
 }
