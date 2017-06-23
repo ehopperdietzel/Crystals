@@ -7,7 +7,7 @@ AppWindow::AppWindow(xcb_window_t _client)
     client = _client;
 
     //Le dice al server que eventos quieres escuchar
-    XSelectInput(QX11Info::display(),_client, KeyPressMask | KeyReleaseMask |  ButtonPressMask | ButtonReleaseMask | KeymapStateMask | ButtonMotionMask | PointerMotionMask |  EnterWindowMask | LeaveWindowMask |  FocusChangeMask |  VisibilityChangeMask |  ExposureMask | StructureNotifyMask | SubstructureRedirectMask | SubstructureNotifyMask );
+    XSelectInput(QX11Info::display(),window->winId(), KeyPressMask | KeyReleaseMask |  ButtonPressMask | ButtonReleaseMask | KeymapStateMask | ButtonMotionMask | PointerMotionMask |  EnterWindowMask | LeaveWindowMask |  FocusChangeMask |  VisibilityChangeMask |  ExposureMask | StructureNotifyMask | SubstructureRedirectMask | SubstructureNotifyMask );
 
     //Mapea el cliente en un QWindow
     win = QWindow::fromWinId(client);
@@ -35,12 +35,34 @@ AppWindow::AppWindow(xcb_window_t _client)
         window->setFixedSize(_w/QApplication::primaryScreen()->devicePixelRatio(),_h/QApplication::primaryScreen()->devicePixelRatio());
     }
 
-    //move(_x,_y + 30);
-    move(50,50);
-
-
+    move(_x,_y + 30);
 
     //XMoveResizeWindow(QX11Info::display(),client,0,0,_w,_h);
+
+    //Configura los estilos
+    style();
+
+}
+
+AppWindow::AppWindow(int _client, int x, int y, int w, int h)
+{
+
+    //Almacena el WinID para usos futuros
+    client = _client;
+
+    //Le dice al server que eventos quieres escuchar
+    XSelectInput(QX11Info::display(),window->winId(), KeyPressMask | KeyReleaseMask |  ButtonPressMask | ButtonReleaseMask | KeymapStateMask | ButtonMotionMask | PointerMotionMask |  EnterWindowMask | LeaveWindowMask |  FocusChangeMask |  VisibilityChangeMask |  ExposureMask | StructureNotifyMask | SubstructureRedirectMask | SubstructureNotifyMask );
+
+    //Mapea el cliente en un QWindow
+    win = QWindow::fromWinId(client);
+
+    //Se crea un conetedor para el QWindow
+    window = QWidget::createWindowContainer(win);
+
+    //Asigna las proporciones
+
+    window->setFixedSize(w,h);
+    move(x,y);
 
     //Configura los estilos
     style();
@@ -73,12 +95,12 @@ void AppWindow::style() //Añade los estilos a todos los elementos
     container->setObjectName("WD");
 
     //Estilo de la ventana
-    container->setStyleSheet("#WD{background:#FAFAFA;border-top-left-radius:7px;border-top-right-radius:7px;border:1px solid rgba(0,0,0,10)}");
+    container->setStyleSheet("#WD{background:#FAFAFA;border-top-left-radius:7px;border-top-right-radius:7px;}");
 
     //Crea la sombra
-    shadow->setColor(QColor(0,0,0,30));
-    shadow->setBlurRadius(15);
-    shadow->setOffset(0,4);
+    shadow->setColor(QColor(0,0,0,40));
+    shadow->setBlurRadius(16);
+    shadow->setOffset(0,0);
     container->setGraphicsEffect(shadow);
 
     //Muestra la ventana

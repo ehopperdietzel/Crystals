@@ -1,25 +1,17 @@
 #include "windowmanager.h"
 
-Q_DECLARE_METATYPE(QList<int>)
-
 
 WindowManager::WindowManager()
 {
-    qRegisterMetaTypeStreamOperators<QList<int> >("QList<int>");
+    messages->move(10,10);
+    messages->show();
 
     //Detecta si previamente se ha cambiado la resolucion de la pantalla
-    if(settings.contains("RestoreWindows"))
+    if(QFileInfo::exists("/tmp/screens.json"))
     {
-        QProcess::startDetached("firefox");
         restoreWindows();
     }
-    else
-    {
-        //Inicia una terminal por defecto
-        //QProcess::startDetached("gnome-terminal");
-        QProcess::startDetached("xterm");
 
-    }
     connect(coreClient,SIGNAL(message(QString,QString)),this,SLOT(newCoreMessage(QString,QString)));
 }
 
@@ -45,24 +37,82 @@ void WindowManager::resizeAppWindow(int wid, int width, int height)
     appWindows[wid]->resizeReq(width,height);
 }
 
+//Recibe los mensajes de SiO4
 void WindowManager::newCoreMessage(QString name, QString data)
 {
+
+    //Cambio de resolucion
     if(name == "CHANGERESOLUTION")
     {
-        settings.setValue("CurrentWindows",QVariant::fromValue(appWindows.keys()));
+
+        QVariantMap savedClients;
+
+        //Cambia de padres a todas los clientes para que no se cierren los procesos
+        foreach (AppWindow *win, appWindows) {
+
+            //Guarda la informacion: data << Wid << X << Y << W << H
+            QVariantList clientData;
+            clientData.append(win->client);
+            clientData.append(win->window->pos().x());
+            clientData.append(win->window->pos().y());
+            clientData.append(win->window->width());
+            clientData.append(win->window->height());
+
+            savedClients.insert(QString::number(win->client),clientData);
+            win->hide();
+            XReparentWindow(QX11Info::display(),win->client,QX11Info::appRootWindow(),500,500);
+            win->show();
+            win->hide();
+
+        }
+
+        //Guarda los wid de los clientes actuales
+        QFile saver("/tmp/screens.json");
+        saver.open(QIODevice::ReadWrite);
+        QJsonDocument doc = QJsonDocument::fromVariant(savedClients);
+        saver.write(doc.toBinaryData());
+        saver.close();
+
+        //Le dice a SiO4 que reinicie Crystals
         coreClient->sendMessage("RELAUNCHCRYSTALS","NULL");
+
     }
 }
 
 
+//Vuelve a mapear los clientes, luego de cambio de resolucion
 
 void WindowManager::restoreWindows()
 {
-    QList<int> windowIDs = settings.value("CurrentWindows").value<QList<int> >();
 
-    foreach (int wid, windowIDs)
-        mapAppWindow(wid);
+    //Lee los Wids guardados
+    QFile saver("/tmp/screens.json");
+    saver.open(QIODevice::ReadWrite);
+    QJsonDocument doc = QJsonDocument::fromBinaryData(saver.readAll());
+    QVariantMap wids = doc.toVariant().toMap();
+    saver.close();
 
-    settings.remove("CurrentWindows");
+
+
+    foreach (QString key, wids.keys())
+    {
+        QVariantList clientData = wids[key].toList();
+
+        messages->setText(QString::number(clientData[0].toInt()));
+        AppWindow *newWin = new AppWindow(
+                    clientData[0].toInt(),
+                    clientData[1].toFloat(),
+                    clientData[2].toFloat(),
+                    clientData[3].toFloat(),
+                    clientData[4].toFloat()
+                );
+        appWindows.insert(clientData[0].toInt(),newWin);
+
+    }
+
+    QFile::remove("/tmp/screens.json");
 
 }
+
+
+

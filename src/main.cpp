@@ -9,6 +9,7 @@ int main(int argc, char *argv[])
 
     QApplication a(argc, argv);
 
+
     //Identificador para QSettings
     a.setOrganizationName("CuarzoSoftware");
     a.setApplicationName("Crystals");

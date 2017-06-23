@@ -16,19 +16,17 @@ SOURCES += \
         main.cpp \
     events.cpp \
     appwindow.cpp \
-    topbarbutton.cpp \
-    windowmanager.cpp \
-    appwindowtitlebar.cpp
+    windowmanager.cpp
 
 HEADERS += \
     events.h \
     includes.h \
     appwindow.h \
-    topbarbutton.h \
     windowmanager.h \
-    appwindowtitlebar.h \
     huincha.h \
-    coreclient.h
+    coreclient.h \
+    windowbuttons.h \
+    topbar.h
 
 RESOURCES += \
     resources.qrc

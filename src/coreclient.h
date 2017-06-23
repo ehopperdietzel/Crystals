@@ -3,13 +3,13 @@
 
 #include "includes.h"
 
-class CoreClient : public QTcpSocket
+class CoreClient : public QLocalSocket
 {
     Q_OBJECT
 public:
     CoreClient()
     {
-        connectToHost(QHostAddress("127.0.0.1"),1996);
+        connectToServer("CuarzoServer");
         connect(this,SIGNAL(readyRead()),this,SLOT(newMessage()));
     }
 

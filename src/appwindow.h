@@ -3,7 +3,7 @@
 
 #include "includes.h"
 #include "huincha.h"
-#include "appwindowtitlebar.h"
+#include "topbar.h"
 
 
 //Esta clase es para crear contenedores ( Ventanas ) para las aplicaciones graficas que se ejecuten.
@@ -12,6 +12,7 @@ class AppWindow : public QWidget
 {
 public:
     AppWindow(xcb_window_t _client);
+    AppWindow(int _client, int x, int y, int w, int h);
 
     // ORDEN ---------------------------------
     // AppWindow -> Container -> Topbar -> Win
@@ -33,7 +34,7 @@ public:
     QWidget *window = new QWidget();
 
     //Barra de titulo
-    AppWindowTitleBar *titleBar = new AppWindowTitleBar();
+    TopBar *titleBar = new TopBar();
 
     //Sombra
     QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect(container);

@@ -10,9 +10,12 @@ class WindowManager : public QObject
     Q_OBJECT
 public:
     explicit WindowManager();
+
+    Huincha huincha;
     QMap<int,AppWindow*>appWindows;
     QSettings settings;
     CoreClient *coreClient = new CoreClient();
+    QLabel *messages = new QLabel("Holiwis");
 
 signals:
 
