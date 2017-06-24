@@ -17,6 +17,7 @@
 #include <QFrame>
 #include <QScreen>
 #include <QSettings>
+#include <QToolButton>
 #include <QLocalSocket>
 #include <QMetaType>
 #include <QPainter>

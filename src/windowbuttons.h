@@ -5,25 +5,27 @@
 
 //Clase de boton
 
-class TopBarButton : public QPushButton
+class TopBarButton : public QToolButton
 {
     Q_OBJECT
 public:
     QIcon normal,active;
+    QSize size;
     QGraphicsColorizeEffect *effect = new QGraphicsColorizeEffect(this);
-    TopBarButton(QString normalPix,QString activePix,QSize size)
+    TopBarButton(QString normalPix,QString activePix,QSize _size)
     {
-        effect->setEnabled(false);
-        effect->setColor(QColor(Qt::black));
-        effect->setStrength(0.4);
+        size = _size;
+        setStyleSheet("border:none;outline:none");
         setMouseTracking(true);
         normal = QIcon(normalPix);
         active = QIcon(activePix);
         setIconSize(size);
         setFixedSize(size);
-        setIcon(normal);
-        setStyleSheet("border:none;outline:none");
+        effect->setColor(Qt::black);
+        effect->setStrength(0.7);
+        effect->setEnabled(false);
         setGraphicsEffect(effect);
+        setIcon(normal);
     }
 
     void mousePressEvent(QMouseEvent*)
@@ -44,7 +46,7 @@ class WindowButtons : public QWidget
 {
     Q_OBJECT
 public:
-    explicit WindowButtons()
+    WindowButtons()
     {
         setAttribute(Qt::WA_Hover);
 
@@ -59,10 +61,12 @@ public:
     //Layout
     QHBoxLayout *layout = new QHBoxLayout(this);
 
+    //Tamaño de botones
+    QSize bSize = QSize(12,12);
     //Botones
-    TopBarButton *closeButton = new TopBarButton(":/img/window/Buttons/w_close_n.png",":/img/window/Buttons/w_close_h.png",QSize(11,11));
-    TopBarButton *minimizeButton = new TopBarButton(":/img/window/Buttons/w_minimize_n.png",":/img/window/Buttons/w_minimize_h.png",QSize(11,11));
-    TopBarButton *expandButton = new TopBarButton(":/img/window/Buttons/w_expand_n.png",":/img/window/Buttons/w_expand_h.png",QSize(11,11));
+    TopBarButton *closeButton = new TopBarButton(":/img/window/Buttons/w_close_n.png",":/img/window/Buttons/w_close_h.png",bSize);
+    TopBarButton *minimizeButton = new TopBarButton(":/img/window/Buttons/w_minimize_n.png",":/img/window/Buttons/w_minimize_h.png",bSize);
+    TopBarButton *expandButton = new TopBarButton(":/img/window/Buttons/w_expand_n.png",":/img/window/Buttons/w_expand_h.png",bSize);
 
     void enterEvent(QEvent *)
     {
