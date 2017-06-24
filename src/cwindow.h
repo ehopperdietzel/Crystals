@@ -8,14 +8,17 @@
 
 //Esta clase es para crear contenedores ( Ventanas ) para las aplicaciones graficas que se ejecuten.
 
-class AppWindow : public QWidget
+class CWindow : public QLabel
 {
+    Q_OBJECT
 public:
-    AppWindow(xcb_window_t _client);
-    AppWindow(int _client, int x, int y, int w, int h);
+
+    //Constructores
+
+    CWindow(int _client);
 
     // ORDEN ---------------------------------
-    // AppWindow -> Container -> Topbar -> Win
+    // AppWindow -> Container -> Topbar
     // ------------------------  Window ------
 
     //Crea un espacio para las sombras
@@ -27,11 +30,11 @@ public:
     //Separa la ventana del topbar
     QBoxLayout *containerLayout = new QBoxLayout(QBoxLayout::TopToBottom,container);
 
-    //Ventana cliente
-    QWindow *win;
+    //Ventana Cliente
+    QWindow *cWindow;
 
     //Contenedor de la ventana
-    QWidget *window = new QWidget();
+    QWidget *window;
 
     //Barra de titulo
     TopBar *titleBar = new TopBar();
@@ -39,25 +42,41 @@ public:
     //Sombra
     QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect(container);
 
+    //Opacidad
+    QGraphicsOpacityEffect *opacity = new QGraphicsOpacityEffect(this);
+
     //Utilidades
     Huincha huincha;
 
-    //Win ID del cliente
+    //Datos Cliente
     int client;
+    QRect clientGeometry;
+    QString clientName;
+
+    //Datos de la pantalla
+    float Xdpi = QX11Info::appDpiX();
+    float Ydpi = QX11Info::appDpiY();
+
     QSize perSize;
     QPoint perPos;
+    QString grabbingFrom = "";
 
     //Almacena variables para mover la ventana
     QPoint prevWin;
     QPoint prevCur;
+    QSize  prevSize;
     bool pressed = false;
 
     //Eventos del cliente
     void resizeReq(int w, int h);
-
     void style();
     void resizeEvent(QResizeEvent*);
+    void paintEvent(QPaintEvent*);
     bool eventFilter(QObject *watched, QEvent *event);
+
+    //Getters
+    void getClientGeometry();
+    void getClientTitle();
 
 public slots:
     void closeWindow();

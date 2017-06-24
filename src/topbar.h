@@ -11,14 +11,13 @@ public:
     {
         topBarLayout->addWidget(buttons);
         topBarLayout->addWidget(title,1);
-        topBarLayout->setContentsMargins(10,5,10,6);
-        topBarLayout->addSpacing(80);
+        topBarLayout->setContentsMargins(12,8,12,8);
+        topBarLayout->addSpacing(57);
         topBarLayout->setSpacing(10);
 
         setFixedHeight(30);
 
         title->setAlignment(Qt::AlignCenter);
-        title->setText("Application");
         title->setStyleSheet("font-size:11px;color:#222;font-family:Lucida Sans");
 
         setObjectName("TB");

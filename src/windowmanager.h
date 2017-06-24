@@ -2,7 +2,7 @@
 #define WINDOWMANAGER_H
 
 #include "includes.h"
-#include "appwindow.h"
+#include "cwindow.h"
 #include "coreclient.h"
 
 class WindowManager : public QObject
@@ -11,8 +11,10 @@ class WindowManager : public QObject
 public:
     explicit WindowManager();
 
+    //Client - Window
+    QMap<int,CWindow*>windows;
+
     Huincha huincha;
-    QMap<int,AppWindow*>appWindows;
     QSettings settings;
     CoreClient *coreClient = new CoreClient();
     QLabel *messages = new QLabel("Holiwis");
@@ -20,10 +22,13 @@ public:
 signals:
 
 public slots:
-    void mapAppWindow(int wid);
-    void resizeAppWindow(int wid, int width, int height);
     void newCoreMessage(QString name, QString data);
     void restoreWindows();
+
+    //Clients Events
+    void mapAppWindow(int wid);
+    void resizeAppWindow(int wid, int width, int height);
+    void destroyWindow(int wid);
 };
 
 #endif // WINDOWMANAGER_H

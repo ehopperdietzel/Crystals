@@ -15,18 +15,18 @@ LIBS += -lX11
 SOURCES += \
         main.cpp \
     events.cpp \
-    appwindow.cpp \
-    windowmanager.cpp
+    windowmanager.cpp \
+    cwindow.cpp
 
 HEADERS += \
     events.h \
     includes.h \
-    appwindow.h \
     windowmanager.h \
     huincha.h \
     coreclient.h \
     windowbuttons.h \
-    topbar.h
+    topbar.h \
+    cwindow.h
 
 RESOURCES += \
     resources.qrc

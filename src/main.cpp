@@ -5,7 +5,7 @@
 int main(int argc, char *argv[])
 {
     //Ajusta la densidad de pixeles
-    qputenv("QT_AUTO_SCREEN_SCALE_FACTOR","1");
+    //qputenv("QT_AUTO_SCREEN_SCALE_FACTOR","1");
 
     QApplication a(argc, argv);
 
@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 
     //Soporte para pantallas retina
     a.setAttribute(Qt::AA_UseHighDpiPixmaps);
-    a.setAttribute(Qt::AA_EnableHighDpiScaling);
+    //a.setAttribute(Qt::AA_EnableHighDpiScaling);
 
 
     //Instala la clase abstracta de eventos nativos de X11

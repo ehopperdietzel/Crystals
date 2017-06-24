@@ -7,6 +7,7 @@ Events::Events()
     //Obtener permisos y extensiones para el WM
     getAtoms();
     sendSupportedHints();
+
 }
 
 //Eventos de X11
@@ -35,7 +36,18 @@ bool Events::nativeEventFilter(const QByteArray &eventType, void *message, long 
         if(event->response_type == XCB_REPARENT_NOTIFY)
         {
             //Parseas el evento especifico
-            xcb_reparent_notify_event_t *reparentEvent = (xcb_reparent_notify_event_t*)event;
+            //xcb_reparent_notify_event_t *reparentEvent = (xcb_reparent_notify_event_t*)event;
+
+            return true;
+        }
+
+        //Move Request ( Una aplicacion quiere moverse )
+        if(event->response_type == XCB_CHANGE_WINDOW_ATTRIBUTES)
+        {
+            //Parseas el evento especifico
+            xcb_change_window_attributes_request_t *moveRequest = (xcb_change_window_attributes_request_t*)event;
+
+            //windowManager->resizeAppWindow(resizeRequest->window,resizeRequest->width,resizeRequest->height);
 
             return true;
         }
@@ -46,7 +58,21 @@ bool Events::nativeEventFilter(const QByteArray &eventType, void *message, long 
             //Parseas el evento especifico
             xcb_resize_request_event_t *resizeRequest = (xcb_resize_request_event_t*)event;
 
+            windowManager->messages->setText(QString::number(resizeRequest->width));
+
             windowManager->resizeAppWindow(resizeRequest->window,resizeRequest->width,resizeRequest->height);
+
+            return true;
+        }
+
+
+        //Resize request ( Una aplicacion quiere cambiar de tamaño )
+        if(event->response_type == XCB_DESTROY_NOTIFY)
+        {
+            //Parseas el evento especifico
+            xcb_destroy_notify_event_t *destroyRequest = (xcb_destroy_notify_event_t*)event;
+
+            windowManager->destroyWindow(destroyRequest->window);
 
             return true;
         }

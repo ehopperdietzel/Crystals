@@ -4,6 +4,7 @@
 WindowManager::WindowManager()
 {
     messages->move(10,10);
+    messages->setFixedSize(200,50);
     messages->show();
 
     //Detecta si previamente se ha cambiado la resolucion de la pantalla
@@ -19,22 +20,27 @@ WindowManager::WindowManager()
 void WindowManager::mapAppWindow(int wid)
 {
     //Detecta si ya esta mapeada
-    if(appWindows.contains(wid))
+    if(windows.contains(wid))
         return;
 
     //Lo embedas en una ventana de Cuarzo
-    AppWindow *newWin = new AppWindow(wid);
-    appWindows.insert(wid,newWin);
+    CWindow *newWin = new CWindow(wid);
+    windows.insert(wid,newWin);
 }
 
 void WindowManager::resizeAppWindow(int wid, int width, int height)
 {
     //Detecta si ya esta mapeada
-    if(!appWindows.contains(wid))
+    if(!windows.contains(wid))
         return;
 
     //Le cambias el tamaño
-    appWindows[wid]->resizeReq(width,height);
+    windows[wid]->resizeReq(width,height);
+}
+
+void WindowManager::destroyWindow(int wid)
+{
+   windows.take(wid)->closeWindow();
 }
 
 //Recibe los mensajes de SiO4
@@ -48,7 +54,7 @@ void WindowManager::newCoreMessage(QString name, QString data)
         QVariantMap savedClients;
 
         //Cambia de padres a todas los clientes para que no se cierren los procesos
-        foreach (AppWindow *win, appWindows) {
+        foreach (CWindow *win, windows) {
 
             //Guarda la informacion: data << Wid << X << Y << W << H
             QVariantList clientData;
@@ -92,24 +98,27 @@ void WindowManager::restoreWindows()
     QVariantMap wids = doc.toVariant().toMap();
     saver.close();
 
-
-
+    //Vuelve a mapear los clientes
     foreach (QString key, wids.keys())
     {
         QVariantList clientData = wids[key].toList();
 
         messages->setText(QString::number(clientData[0].toInt()));
-        AppWindow *newWin = new AppWindow(
+        /*
+        CWindow *newWin = new CWindow(
                     clientData[0].toInt(),
                     clientData[1].toFloat(),
                     clientData[2].toFloat(),
                     clientData[3].toFloat(),
                     clientData[4].toFloat()
                 );
-        appWindows.insert(clientData[0].toInt(),newWin);
+                */
+        CWindow *newWin = new CWindow(clientData[0].toInt());
+        windows.insert(clientData[0].toInt(),newWin);
 
     }
 
+    //Elimina el respaldo
     QFile::remove("/tmp/screens.json");
 
 }

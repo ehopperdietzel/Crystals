@@ -11,6 +11,8 @@
 #include <QObject>
 #include <QGraphicsDropShadowEffect>
 #include <QGraphicsEffect>
+#include <QGraphicsOpacityEffect>
+#include <QBitmap>
 #include <QResizeEvent>
 #include <QFrame>
 #include <QScreen>
