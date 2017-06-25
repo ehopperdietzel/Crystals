@@ -34,7 +34,7 @@ public:
     QWindow *cWindow;
 
     //Contenedor de la ventana
-    QWidget *window;
+    QWidget *window = new QWidget();
 
     //Barra de titulo
     TopBar *titleBar = new TopBar();
@@ -50,12 +50,14 @@ public:
 
     //Datos Cliente
     int client;
+    unsigned int clientBorder;
+    XSizeHints limitSizes;
+    long suppliedSizes;
     QRect clientGeometry;
     QString clientName;
 
     //Datos de la pantalla
-    float Xdpi = QX11Info::appDpiX();
-    float Ydpi = QX11Info::appDpiY();
+    float dpi = QApplication::desktop()->devicePixelRatio();
 
     QSize perSize;
     QPoint perPos;
@@ -77,6 +79,11 @@ public:
     //Getters
     void getClientGeometry();
     void getClientTitle();
+    void getClientEvents();
+    void getClientLimitSizes();
+
+    //Setters
+
 
 public slots:
     void closeWindow();

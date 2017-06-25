@@ -6,12 +6,15 @@ CWindow::CWindow(int _client)
     client = _client;
 
     //Para poder obtener algunos eventos del cliente
-    XSetWindowAttributes at;
-    at.event_mask = XCB_EVENT_MASK_STRUCTURE_NOTIFY|XCB_EVENT_MASK_EXPOSURE|XCB_EVENT_MASK_RESIZE_REDIRECT|XCB_EVENT_MASK_PROPERTY_CHANGE;
-    XChangeWindowAttributes(QX11Info::display(), client, CWEventMask, &at);
+    getClientEvents();
+
+    //Elimina los bordes
+    XSetWindowBorderWidth(QX11Info::display(), client, 0);
 
     //Obtiene las dimensiones del cliente
     getClientGeometry();
+
+    //Obtiene el titulo de la ventana
     getClientTitle();
 
     //Mapea la ventana
@@ -19,13 +22,6 @@ CWindow::CWindow(int _client)
 
     //Mapea al cliente
     window = QWidget::createWindowContainer(cWindow);
-
-    move(clientGeometry.x(),clientGeometry.y() + titleBar->height());
-
-    setFixedSize(clientGeometry.width(),clientGeometry.height() +  titleBar->height());
-
-    window->move(0,0);
-    cWindow->setPosition(0,0);
 
     //Configura los estilos
     style();
@@ -65,15 +61,16 @@ void CWindow::style() //Añade los estilos a todos los elementos
     container->setObjectName("Container");
     container->setStyleSheet("#Container{background:#FFF;border-radius:2px}");
 
-    //Tamaños
-    setMaximumSize(QApplication::desktop()->size());
-    setMinimumSize(128,128);
-
     //Crea la sombra
     shadow->setColor(QColor(0,0,0,100));
-    shadow->setBlurRadius(16);
+    shadow->setBlurRadius(8);
     shadow->setOffset(0,0);
     container->setGraphicsEffect(shadow);
+
+    //Obtiene los tamaños limites ( Nueva API )
+    getClientLimitSizes();
+    resize(limitSizes.width * dpi + 16,limitSizes.height * dpi + titleBar->height() + 12);
+    move(limitSizes.x * dpi - 8,limitSizes.y * dpi - 4 - titleBar->height());
 
     //Muestra la ventana
     show();
@@ -89,12 +86,11 @@ void CWindow::resizeReq(int w, int h) //El cliente desea cambiar de tamaño
 void CWindow::resizeEvent(QResizeEvent *) //Evento cuando la ventana cambia de tamaño.
 {
 
-
 }
 
 void CWindow::paintEvent(QPaintEvent *)
 {
-    cWindow->setMask(QRegion(0,0,window->rect().width()-1,window->rect().height()));
+    cWindow->setMask(QRegion(0,0,window->rect().width()-clientBorder,window->rect().height() - clientBorder));
 }
 
 
@@ -155,20 +151,20 @@ bool CWindow::eventFilter(QObject *watched, QEvent *event)
         //Resize Right
         if(pressed && grabbingFrom == "R")
         {
+            getClientLimitSizes();
             QMouseEvent *me = static_cast<QMouseEvent*>(event);
             int newWidth = mouse.x() - prevCur.x() + prevSize.width();
-            setFixedWidth(newWidth);
-            XResizeWindow(QX11Info::display(),client,newWidth*Xdpi,window->height()*Ydpi);
+            resize(newWidth,height());
             return true;
         }
-        //Resize Right
+        //Resize Bottom Right
         else if(pressed && grabbingFrom == "BR")
         {
+            getClientLimitSizes();
             QMouseEvent *me = static_cast<QMouseEvent*>(event);
             int newWidth = mouse.x() - prevCur.x() + prevSize.width();
             int newHeight = mouse.y() - prevCur.y() + prevSize.height();
-            //XResizeWindow(QX11Info::display(),client,newWidth*Xdpi,window->height());
-            setFixedSize(newWidth,newHeight);
+            resize(newWidth,newHeight);
             return true;
         }
 
@@ -240,9 +236,9 @@ bool CWindow::eventFilter(QObject *watched, QEvent *event)
 void CWindow::getClientGeometry()
 {
     int x,y;
-    unsigned int w,h,bx,by;
+    unsigned int w,h,by;
     Window win;
-    XGetGeometry(QX11Info::display(), client, &win, &x, &y, &w, &h, &bx, &by);
+    XGetGeometry(QX11Info::display(), client, &win, &x, &y, &w, &h, &clientBorder, &by);
     clientGeometry = QRect(x,y,w,h);
 }
 
@@ -288,5 +284,50 @@ void CWindow::getClientTitle()
     {
         XFree(data);
     }
+}
+
+void CWindow::getClientEvents()
+{
+    XSetWindowAttributes at;
+    at.event_mask = XCB_EVENT_MASK_STRUCTURE_NOTIFY|XCB_EVENT_MASK_EXPOSURE|XCB_EVENT_MASK_RESIZE_REDIRECT|XCB_EVENT_MASK_PROPERTY_CHANGE;
+    XChangeWindowAttributes(QX11Info::display(), client, CWEventMask, &at);
+}
+
+void CWindow::getClientLimitSizes()
+{
+    XGetWMNormalHints(QX11Info::display(), client, &limitSizes, &suppliedSizes);
+
+    //Tamaño minimo
+    if(limitSizes.min_width < 100)
+        limitSizes.min_width = 100;
+
+    if(limitSizes.min_height < 50)
+        limitSizes.min_height = 50;
+
+    if(limitSizes.min_width > QApplication::desktop()->width() * dpi)
+        limitSizes.min_width = QApplication::desktop()->width();
+
+    if(limitSizes.min_height > QApplication::desktop()->height() * dpi)
+        limitSizes.min_height = QApplication::desktop()->height();
+
+    //Tamaño maximo
+    if(limitSizes.max_width < 100 * dpi)
+        limitSizes.max_width = QApplication::desktop()->width();
+
+    if(limitSizes.max_height < 50 * dpi)
+        limitSizes.max_height = QApplication::desktop()->height();
+
+    if(limitSizes.max_width > QApplication::desktop()->width() * dpi)
+        limitSizes.max_width = QApplication::desktop()->width();
+
+    if(limitSizes.max_height > QApplication::desktop()->height() * dpi)
+        limitSizes.max_height = QApplication::desktop()->height();
+
+    //Pos
+    if(limitSizes.y * dpi < titleBar->height() + 4)
+        limitSizes.y = titleBar->height() + 6;
+
+    setMinimumSize(limitSizes.min_width *dpi + 12,limitSizes.min_height * dpi + titleBar->height() + 8);
+    setMaximumSize(limitSizes.max_width *dpi + 12,limitSizes.max_height * dpi + titleBar->height() + 8);
 }
 

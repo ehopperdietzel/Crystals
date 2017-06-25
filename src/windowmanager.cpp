@@ -7,6 +7,8 @@ WindowManager::WindowManager()
     messages->setFixedSize(200,50);
     messages->show();
 
+    messages->setText(QString::number(QApplication::desktop()->depth()));
+
     //Detecta si previamente se ha cambiado la resolucion de la pantalla
     if(QFileInfo::exists("/tmp/screens.json"))
     {
