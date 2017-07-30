@@ -1,5 +1,4 @@
-
-#include <QGuiApplication>
+#include "headers.h"
 #include "window.h"
 #include "compositor.h"
 

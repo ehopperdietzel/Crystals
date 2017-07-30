@@ -1,6 +1,7 @@
 attribute vec4 pos;
 attribute vec4 col;
 
+
 varying vec4 finalColor;
 
 attribute vec2 texCoordsIn;

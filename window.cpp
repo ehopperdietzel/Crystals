@@ -1,39 +1,9 @@
 #include "window.h"
-
-#include <QMouseEvent>
-#include <QOpenGLWindow>
-#include <QOpenGLTexture>
-#include <QOpenGLFunctions>
-#include <QMatrix4x4>
-
 #include "compositor.h"
-#include <QtWaylandCompositor/qwaylandseat.h>
 
-#include <QVector2D>
-#include <QVector3D>
-
-struct Vertex
-{
-    float position[3];
-    float color[4];
-    float texture[2];
-};
-
-Vertex vertices[] = {
-    {{ 1,-1, 0}, {1, 0, 0, 1}, {1,1}},
-    {{ 1, 1, 0}, {0, 1, 0, 1}, {1,0}},
-    {{-1, 1, 0}, {0, 0, 1, 1}, {0,0}},
-    {{-1,-1, 0}, {0, 0, 0, 1}, {0,1}}
-};
-
-GLubyte Indices[] = {
-     0, 1, 2,
-     2, 3, 0
-};
 
 Window::Window()
-    : backgroundTexture(0)
-    , compositor(0)
+    : compositor(0)
     , grabState(NoGrab)
     , dragIconView(0)
 {
@@ -67,19 +37,16 @@ void Window::initShaders()
 
     glUseProgram(program.programId());
 
+
     posSlot = glGetAttribLocation(program.programId(), "pos");
     colSlot = glGetAttribLocation(program.programId(), "col");
     corSlot = glGetAttribLocation(program.programId(), "texCoordsIn");
     texSlot = glGetUniformLocation(program.programId(), "Texture");
+    modSlot = glGetUniformLocation(program.programId(), "onlyColor");
 
     glEnableVertexAttribArray(posSlot);
     glEnableVertexAttribArray(colSlot);
     glEnableVertexAttribArray(corSlot);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, backgroundTexture->textureId());
-    glUniform1i(texSlot, 0);
-
 
 }
 
@@ -87,19 +54,18 @@ void Window::initShaders()
 void Window::initializeGL()
 {
 
-
     glGenBuffers(1, &vertexBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-
     glGenBuffers(1, &indexBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Indices), Indices, GL_STATIC_DRAW);
+
+    QOpenGLTexture *backgroundTexture = new QOpenGLTexture( QImage("/home/e/wallpaper.jpg"), QOpenGLTexture::DontGenerateMipMaps);
+    backgroundTexture->setMinificationFilter(QOpenGLTexture::Linear);
+    backgroundTexture->setMagnificationFilter(QOpenGLTexture::Linear);
 
 
-    //Set background image
-    setBackground("/home/e/wallpaper.jpg");
+    background->setImage(backgroundTexture);
+    background->setMode(Image);
+    background->setImageMode(KeepRatioToFill);
+    background->setColor(QColor(200,100,100,10));
 
     //Create shaders
     initShaders();
@@ -112,21 +78,32 @@ void Window::initializeGL()
 void Window::drawBackground()
 {
 
+    glUniform1i(modSlot,false);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, background->texture->textureId());
+    glUniform1i(texSlot, 0);
+
+    glGenBuffers(1, &vertexBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(background->vertices), background->vertices, GL_STATIC_DRAW);
+
+
+    glGenBuffers(1, &indexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(background->Indices), background->Indices, GL_STATIC_DRAW);
+
     glVertexAttribPointer(posSlot, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
     glVertexAttribPointer(colSlot, 4, GL_FLOAT, GL_FALSE,sizeof(Vertex), (GLvoid*) (sizeof(float) * 3));
     glVertexAttribPointer(corSlot, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*) (sizeof(float) * 7));
 
-    glDrawElements(GL_TRIANGLES, sizeof(Indices)/sizeof(Indices[0]),GL_UNSIGNED_BYTE, 0);
+    glDrawElements(GL_TRIANGLES, sizeof(GLubyte)*6,GL_UNSIGNED_BYTE, 0);
 }
 
 
 void Window::setBackground(QString path)
 {
-    backgroundTexture = new QOpenGLTexture( QImage(path), QOpenGLTexture::DontGenerateMipMaps);
 
-    backgroundTexture->setMinificationFilter(QOpenGLTexture::Linear);
-
-    backgroundTexture->setMagnificationFilter(QOpenGLTexture::Linear);
 
 }
 
@@ -157,6 +134,12 @@ void Window::paintGL()
 
     //Clear screen
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    //Enable alpha blending
+    glEnable(GL_BLEND);
+
+    //Set blend mode
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
     //Loop all views
@@ -190,7 +173,7 @@ void Window::paintGL()
                 auto surfaceOrigin = view->textureOrigin();
                 auto sf = view->animationFactor();
                 QRectF targetRect(surfaceGeometry.topLeft() * sf, surfaceGeometry.size() * sf);
-                backgroundTexture = view->getTexture();
+
             }
         }
     }
@@ -200,6 +183,12 @@ void Window::paintGL()
     drawBackground();
 
     compositor->endRender();
+}
+
+void Window::resizeGL(int w, int h)
+{
+    if(background->viewMode == Image)
+        background->setImageMode(background->imageMode);
 }
 
 View *Window::viewAt(const QPointF &point)

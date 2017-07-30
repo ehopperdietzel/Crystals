@@ -1,12 +1,8 @@
-
 #ifndef COMPOSITORWINDOW_H
 #define COMPOSITORWINDOW_H
 
-#include <QOpenGLWindow>
-#include <QPointer>
-#include <QOpenGLTextureBlitter>
-#include <QOpenGLShaderProgram>
-#include <QOpenGLBuffer>
+#include "headers.h"
+#include "background.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -25,6 +21,7 @@ public:
 protected:
     void initializeGL() override;
     void paintGL() override;
+    void resizeGL(int w, int h) override;
 
     void mousePressEvent(QMouseEvent *e) override;
     void mouseReleaseEvent(QMouseEvent *e) override;
@@ -42,13 +39,16 @@ private slots:
 
 private:
     QOpenGLShaderProgram program;
-    QOpenGLTexture *backgroundTexture;
     GLuint vertexBuffer, indexBuffer;
 
+    GLuint modSlot; //Vertex  pos
     GLuint posSlot; //Vertex  pos
     GLuint colSlot; //Vertex  col
     GLuint corSlot; //Texture pos
     GLuint texSlot; //Texture uni
+
+    Background *background = new Background(this);
+
 
 
     enum GrabState { NoGrab, MoveGrab, ResizeGrab, DragGrab };

@@ -3,11 +3,14 @@ QT += gui core waylandcompositor waylandcompositor
 
 HEADERS += \
     window.h \
-    compositor.h
+    compositor.h \
+    background.h \
+    headers.h
 
 SOURCES += main.cpp \
     window.cpp \
-    compositor.cpp
+    compositor.cpp \
+    background.cpp
 
 DISTFILES += \
     fshader.glsl \

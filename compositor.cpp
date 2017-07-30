@@ -1,16 +1,5 @@
 #include "compositor.h"
 
-#include <QMouseEvent>
-#include <QKeyEvent>
-#include <QTouchEvent>
-
-#include <QtWaylandCompositor/QWaylandXdgShellV5>
-#include <QtWaylandCompositor/QWaylandWlShellSurface>
-#include <QtWaylandCompositor/qwaylandseat.h>
-#include <QtWaylandCompositor/qwaylanddrag.h>
-
-#include <QDebug>
-#include <QOpenGLContext>
 
 #ifndef GL_TEXTURE_EXTERNAL_OES
 #define GL_TEXTURE_EXTERNAL_OES 0x8D65
