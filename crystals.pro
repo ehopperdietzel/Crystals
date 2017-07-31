@@ -5,12 +5,14 @@ HEADERS += \
     window.h \
     compositor.h \
     background.h \
-    headers.h
+    headers.h \
+    view.h
 
 SOURCES += main.cpp \
     window.cpp \
     compositor.cpp \
-    background.cpp
+    background.cpp \
+    view.cpp
 
 DISTFILES += \
     fshader.glsl \

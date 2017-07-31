@@ -1,20 +1,16 @@
-
-//QT
-
+// QT
 #include <QGuiApplication>
 #include <QObject>
 #include <QTimer>
 #include <QDebug>
 #include <QPointer>
+#include <QtMath>
 
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QTouchEvent>
 
-
-
-//Wayland
-
+// Wayland
 #include <QtWaylandCompositor/QWaylandCompositor>
 #include <QtWaylandCompositor/QWaylandSurface>
 #include <QtWaylandCompositor/QWaylandView>
@@ -25,10 +21,7 @@
 #include <QtWaylandCompositor/qwaylandseat.h>
 #include <QtWaylandCompositor/qwaylanddrag.h>
 
-
-
-//Open GL
-
+// Open GL
 #include <QOpenGLWindow>
 #include <QOpenGLContext>
 #include <QOpenGLTextureBlitter>
@@ -42,3 +35,21 @@
 #include <QVector3D>
 
 
+#ifndef STRUCTURES
+#define STRUCTURES
+
+// Vertex structure
+struct Vertex
+{
+    float position[3];
+    float color[4];
+    float texture[2];
+};
+
+// Background View Mode
+enum ViewMode { Image, Color, Gradient };
+
+// Background image size mode
+enum ImageMode { ResizeToFill, KeepRatioToFill };
+
+#endif

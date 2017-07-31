@@ -13,15 +13,13 @@ class QOpenGLTexture;
 class Window : public QOpenGLWindow
 {
 public:
-    Window();
-
     void setCompositor(Compositor *comp);
     void setBackground(QString path);
 
 protected:
     void initializeGL() override;
     void paintGL() override;
-    void resizeGL(int w, int h) override;
+    void resizeGL(int, int) override;
 
     void mousePressEvent(QMouseEvent *e) override;
     void mouseReleaseEvent(QMouseEvent *e) override;
@@ -49,20 +47,19 @@ private:
 
     Background *background = new Background(this);
 
-
-
     enum GrabState { NoGrab, MoveGrab, ResizeGrab, DragGrab };
 
     View *viewAt(const QPointF &point);
     bool mouseGrab() const { return grabState != NoGrab ;}
     void drawBackground();
+    void drawView(View *view);
     void sendMouseEvent(QMouseEvent *e, View *target);
     static QPointF getAnchoredPosition(const QPointF &anchorPosition, int resizeEdge, const QSize &windowSize);
     static QPointF getAnchorPosition(const QPointF &position, int resizeEdge, const QSize &windowSize);
 
     Compositor *compositor;
     QPointer<View> mouseView;
-    GrabState grabState;
+    GrabState grabState = NoGrab;
     QSize initialSize;
     int resizeEdge;
     bool resizeAnchored;

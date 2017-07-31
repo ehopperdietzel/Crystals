@@ -3,16 +3,6 @@
 
 #include "headers.h"
 
-enum ViewMode { Image, Color, Gradient };
-enum ImageMode { ResizeToFill, KeepRatioToFill };
-
-struct Vertex
-{
-    float position[3];
-    float color[4];
-    float texture[2];
-};
-
 class Background : public QObject
 {
     Q_OBJECT

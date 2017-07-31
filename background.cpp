@@ -95,8 +95,6 @@ void Background::setImageMode(ImageMode mode)
             float clipped = ((float)texPropWidth - (float)screenSize.width()) / 2.0f;
             clipped = (1.0f / (float)screenSize.width()) * clipped;
 
-            qDebug() << clipped;
-
             //Set Texture Coords
             setTextureCord(0,0 + clipped,0);
             setTextureCord(1,0 + clipped,1);
