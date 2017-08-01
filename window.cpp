@@ -112,7 +112,7 @@ void Window::drawView(View *view)
     glVertexAttribPointer(colSlot, 4, GL_FLOAT, GL_FALSE,sizeof(Vertex), (GLvoid*) (sizeof(float) * 3));
     glVertexAttribPointer(corSlot, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*) (sizeof(float) * 7));
 
-    glDrawArrays(GL_TRIANGLE_FAN,0,4);
+    glDrawArrays(GL_TRIANGLE_FAN,0,view->radius*2+8);
 }
 
 

@@ -10,9 +10,9 @@ View::View(Compositor *compositor)
     , m_parentView(nullptr)
     , m_animationFactor(1.0)
 {
-    for(int i = 0; i < 4 ; i++)
+    for(int i = 0; i < 2*radius + 8 ; i++)
     {
-        setVertexCol(i,Qt::red);
+        setVertexCol(i,Qt::yellow);
     }
 
 }
@@ -22,41 +22,42 @@ void View::calcVertexPos()
     float h = size().height();
     float w = size().width();
 
-    setVertexPos(0,0,0);
-    setVertexPos(1,0,h);
-    setVertexPos(2,w,h);
-    setVertexPos(3,w,0);
+    setVertexPos(0,w/2,h/2); // Center vertex
+    setVertexPos(1,0,0); // Top Left
+    setVertexPos(2,0,h - radius); // Top Left
 
-    setTextureCord(0,0,0);
-    setTextureCord(1,0,1);
-    setTextureCord(2,1,1);
-    setTextureCord(3,1,0);
-
-    /*
-    setVertexPos(0,0,0);
-    setVertexPos(1,0, ((float)h/4.0f));
-    setVertexPos(2,0, (float)(h/4.0f)*2.0f);
-    setVertexPos(3,0, ((float)h/4.0f)*3.0f);
-
-    for(int i = 0; i <= 12 ; i++)
+    // Bottom Left border radius
+    for(int x = 0; x <= radius; x++)
     {
-        float x = (radius/12.0f)*i;
-        float y = -qSqrt(radius - qPow(x - radius ,2)) - h + radius;
-        setVertexPos(i+4, x, y);
+        float y = qSqrt( qPow( radius , 2 ) - qPow( x - radius , 2 ));
+
+        setVertexPos( x + 3 , x , y + (h - radius) );
     }
 
-    for(int i = 0; i <= 12 ; i++)
+    // Bottom Right border radius
+    for(int x = 0; x <= radius; x++)
     {
-        float x = w - radius + (12.0f/radius)*i;
-        float y = -qSqrt(radius - qPow(x,2)) - h + radius;
-        setVertexPos(i+17, x, y);
+        float y = qSqrt( qPow( radius , 2 ) - qPow( x , 2 ));
+
+        setVertexPos( x + 4 + radius , x + (w - radius) , y + (h - radius) );
     }
 
-    setVertexPos(23,w,0);
-    setVertexPos(22,w, ((float)h/4.0f));
-    setVertexPos(21,w, ((float)h/4.0f)*2.0f);
-    setVertexPos(20,w, ((float)h/4.0f)*3.0f);
-    */
+    setVertexPos(2*radius + 5,w,0); // Top Right
+    setVertexPos(2*radius + 6,0,0); // Top Left (Again)
+
+    calcTexturePos();
+
+}
+
+void View::calcTexturePos()
+{
+    float x = 1.0f / (float)size().width();
+    float y = 1.0f / (float)size().height();
+
+    for(int i = 0; i < 2*radius+9; i++)
+    {
+        setTextureCord(i,vertices[i].position[0]/size().width(), vertices[i].position[1]/size().height());
+    }
 }
 
 void View::toOpenGLPos()
@@ -66,7 +67,7 @@ void View::toOpenGLPos()
     float x = position().x();
     float y = position().y();
 
-    for(int i = 0; i < 4 ; i++)
+    for(int i = 0; i < 2*radius+8 ; i++)
     {
         setVertexPos(
              i,

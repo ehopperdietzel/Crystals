@@ -1,6 +1,6 @@
 
-varying lowp vec4 finalColor;
-varying lowp vec2 texCoordsOut;
+varying highp vec4 finalColor;
+varying highp vec2 texCoordsOut;
 
 uniform bool onlyColor;
 uniform sampler2D Texture;

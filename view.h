@@ -13,11 +13,16 @@ class View : public QWaylandView
 public:
     View(Compositor *compositor);
 
-    Vertex vertices[4];
-    float zIndex = 0.1f;
-    float radius = 12.0f;
+    Vertex vertices[128];
+
+    Vertex shadow[5];
+    Vertex topBar[4];
+
+    float zIndex = 0.01f;
+    float radius = 8;
 
     void calcVertexPos();
+    void calcTexturePos();
     void toOpenGLPos();
 
     void setVertexCol(int index, QColor color); // Assign color to a vertex
@@ -40,6 +45,8 @@ public:
 
     qreal animationFactor() const {return m_animationFactor; }
     void setAnimationFactor(qreal f) {m_animationFactor = f; }
+
+
 
 signals:
     void animationDone();
@@ -73,6 +80,8 @@ public slots:
 
     void startAnimation(bool countUp);
     void cancelAnimation();
+
+
 };
 
 #endif

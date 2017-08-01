@@ -25,7 +25,7 @@ Compositor::~Compositor()
 void Compositor::create()
 {
     QWaylandOutput *output = new QWaylandOutput(this, m_window);
-    QWaylandOutputMode mode(QSize(800, 600), 60000);
+    QWaylandOutputMode mode(QSize(900, 900), 60000);
     output->addMode(mode, true);
     QWaylandCompositor::create();
     output->setCurrentMode(mode);
