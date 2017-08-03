@@ -11,24 +11,25 @@ class View : public QWaylandView
 {
     Q_OBJECT
 public:
-    View(Compositor *compositor);
 
-    Vertex vertices[128];
+    View(Compositor *compositor); // Constructor
 
-    Vertex shadow[5];
-    Vertex topBar[4];
+    Vertex vertices[256]; // Vertex list
 
-    float zIndex = 0.01f;
-    float radius = 8;
 
-    void calcVertexPos();
-    void calcTexturePos();
-    void toOpenGLPos();
+    float zIndex = 0.01f; // Z-Position in OpenGL Coords
+    unsigned radius = 10; // Size of radius
 
+    unsigned int borderWidth = 1;
+    unsigned int borderQ = 1; // Corner Radius Quiality ( Subdividitions )
+    unsigned int topQuadCount, bottomQuadCount, cornerCount; // Amount of used vertices
+
+    void calcVertexPos(); // Calculates all the vertex positions and colors of the view
+    void calcTexturePos(); // Transform pixel coords into OpenGL texture coords (0 to 1)
+    void toOpenGLPos(); // Transform pixel coords into OpenGL coords (-1 to 1)
     void setVertexCol(int index, QColor color); // Assign color to a vertex
     void setVertexPos(int index, float x, float y); // Assign position to a vertex
     void setTextureCord(int index, float x, float y); // Assign vertex texture coords
-
 
     QOpenGLTexture *getTexture();
     QOpenGLTextureBlitter::Origin textureOrigin() const;

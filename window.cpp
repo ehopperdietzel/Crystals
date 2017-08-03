@@ -4,6 +4,7 @@
 
 
 void Window::setCompositor(Compositor *comp) {
+
     compositor = comp;
     connect(compositor, &Compositor::startMove, this, &Window::startMove);
     connect(compositor, &Compositor::startResize, this, &Window::startResize);
@@ -49,22 +50,24 @@ void Window::initShaders()
 
 void Window::initializeGL()
 {
+
     // Create a vertex buffer
     glGenBuffers(1, &vertexBuffer);
 
     // Create a vertex triangles index buffer
     glGenBuffers(1, &indexBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
 
     // Set default background image
     setBackground("/home/e/wallpaper.jpg");
 
     // Set default background color
-    background->setColor(QColor(200,100,100,10));
+    background->setColor(Qt::white);
 
-    //Create shaders
+    // Create shaders
     initShaders();
 
-    //Set screen clear color
+    // Set screen clear color
     glClearColor(1, 1, 1, 1);
 
 }
@@ -78,8 +81,7 @@ void Window::drawBackground()
     glBindTexture(GL_TEXTURE_2D, background->texture->textureId());
     glUniform1i(texSlot, 0);
 
-    glGenBuffers(1, &vertexBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+    //glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(background->vertices), background->vertices, GL_STATIC_DRAW);
 
     glGenBuffers(1, &indexBuffer);
@@ -96,7 +98,6 @@ void Window::drawBackground()
 void Window::drawView(View *view)
 {
     view->calcVertexPos();
-    view->toOpenGLPos();
 
     glUniform1i(modSlot,false);
 
@@ -104,15 +105,18 @@ void Window::drawView(View *view)
     glBindTexture(GL_TEXTURE_2D, view->getTexture()->textureId());
     glUniform1i(texSlot, 0);
 
-    glGenBuffers(1, &vertexBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+
     glBufferData(GL_ARRAY_BUFFER, sizeof(view->vertices), view->vertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(posSlot, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
     glVertexAttribPointer(colSlot, 4, GL_FLOAT, GL_FALSE,sizeof(Vertex), (GLvoid*) (sizeof(float) * 3));
     glVertexAttribPointer(corSlot, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*) (sizeof(float) * 7));
 
-    glDrawArrays(GL_TRIANGLE_FAN,0,view->radius*2+8);
+    glDrawArrays(GL_TRIANGLE_STRIP,0,view->topQuadCount);
+    glDrawArrays(GL_TRIANGLE_STRIP,view->topQuadCount, view->bottomQuadCount);
+    glDrawArrays(GL_TRIANGLE_FAN,view->topQuadCount + view->bottomQuadCount, view->cornerCount*2 + 2);
+    glDrawArrays(GL_TRIANGLE_STRIP,view->topQuadCount + view->bottomQuadCount + view->cornerCount*2 + 2, view->cornerCount*2);
+    glDrawArrays(GL_TRIANGLE_STRIP,view->topQuadCount + view->bottomQuadCount + view->cornerCount*4 + 2, view->cornerCount*2);
 }
 
 
@@ -122,7 +126,6 @@ void Window::setBackground(QString path)
     QOpenGLTexture *backgroundTexture = new QOpenGLTexture( QImage(path), QOpenGLTexture::DontGenerateMipMaps);
     backgroundTexture->setMinificationFilter(QOpenGLTexture::Linear);
     backgroundTexture->setMagnificationFilter(QOpenGLTexture::Linear);
-
 
     background->setImage(backgroundTexture);
     background->setMode(Image);

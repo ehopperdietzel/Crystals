@@ -35,6 +35,7 @@ void Background::setColor(QColor color)
         vertices[i].color[2] = color.blueF();
         vertices[i].color[3] = color.alphaF();
     }
+
 }
 
 void Background::setImage(QOpenGLTexture *_texture)

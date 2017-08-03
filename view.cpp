@@ -10,42 +10,114 @@ View::View(Compositor *compositor)
     , m_parentView(nullptr)
     , m_animationFactor(1.0)
 {
-    for(int i = 0; i < 2*radius + 8 ; i++)
-    {
-        setVertexCol(i,Qt::yellow);
-    }
+
+
+
 
 }
 
 void View::calcVertexPos()
 {
-    float h = size().height();
-    float w = size().width();
+    float h = size().height(); // View Height
+    float w = size().width(); // View Width
 
-    setVertexPos(0,w/2,h/2); // Center vertex
-    setVertexPos(1,0,0); // Top Left
-    setVertexPos(2,0,h - radius); // Top Left
+    // Set all vertex white
+    for(int i = 0; i<14; i++)
+        setVertexCol(i,Qt::white);
+
+    // Top Square ( Triangle Strip 0-7 )
+    setVertexPos(0,0,0);
+    setVertexPos(1,0,h - radius);
+    setVertexPos(2,borderWidth,0);
+    setVertexPos(3,borderWidth,h - radius);
+    setVertexPos(4,w - borderWidth,0);
+    setVertexPos(5,w - borderWidth,h - radius);
+    setVertexPos(6,w,0);
+    setVertexPos(7,w,h-radius);
+
+    topQuadCount = 8;
+
+    // Bottom Square ( Triangle Strip 8-13 )
+    setVertexPos(8,radius,h-radius); // Left Corner Center
+    setVertexPos(9,w-radius,h-radius); // Right Corner Center
+    setVertexPos(10,radius,h-borderWidth);
+    setVertexPos(11,w-radius,h-borderWidth);
+    setVertexPos(12,radius,h);
+    setVertexPos(13,w-radius,h);
+
+    bottomQuadCount = 6;
+
+    // Set transparent vertices
+    setVertexCol(0,Qt::transparent);
+    setVertexCol(1,Qt::transparent);
+    setVertexCol(6,Qt::transparent);
+    setVertexCol(7,Qt::transparent);
+
+    setVertexCol(12,Qt::transparent);
+    setVertexCol(13,Qt::transparent);
+
 
     // Bottom Left border radius
-    for(int x = 0; x <= radius; x++)
-    {
-        float y = qSqrt( qPow( radius , 2 ) - qPow( x - radius , 2 ));
+    setVertexPos(14,radius,h-radius); // Left Corner Center
+    setVertexCol(14, Qt::white);
 
-        setVertexPos( x + 3 , x , y + (h - radius) );
+    int index = 15;
+    cornerCount = 0;
+
+    for(float x = 0; x <= radius; x+=1.0f/borderQ)
+    {
+        float y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x - radius , 2 ));
+        setVertexPos( index, x , y + (h - radius) );
+        setVertexCol( index, Qt::white);
+        index++;
+        cornerCount++;
     }
 
     // Bottom Right border radius
-    for(int x = 0; x <= radius; x++)
-    {
-        float y = qSqrt( qPow( radius , 2 ) - qPow( x , 2 ));
+    setVertexPos(index,radius,h-radius); // Right Corner Center
+    index++;
 
-        setVertexPos( x + 4 + radius , x + (w - radius) , y + (h - radius) );
+    for(float x = 0; x <= radius; x+=1.0f/borderQ)
+    {
+        float y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x , 2 ));
+        setVertexCol(index,Qt::white);
+        setVertexPos(index , x + (w - radius) , y + (h - radius) );
+        index++;
     }
 
-    setVertexPos(2*radius + 5,w,0); // Top Right
-    setVertexPos(2*radius + 6,0,0); // Top Left (Again)
+
+    // Left corner smooth border
+    for(float x = 0; x <= radius; x+=1.0f/borderQ)
+    {
+        float y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x - radius , 2 ));
+        setVertexPos( index, x , y + (h - radius) );
+        setVertexCol( index, Qt::white);
+        index++;
+
+        y = qSqrt( qPow( radius, 2 ) - qPow( x - radius , 2 ));
+        setVertexPos( index, x , y + (h - radius) );
+        setVertexCol( index, Qt::transparent);
+        index++;
+    }
+
+    // Right corner smooth border
+    for(float x = 0; x <= radius; x+=1.0f/borderQ)
+    {
+        float y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x , 2 ));
+        setVertexCol(index,Qt::white);
+        setVertexPos(index , x + (w - radius) , y + (h - radius) );
+        index++;
+
+        y = qSqrt( qPow( radius, 2 ) - qPow( x , 2 ));
+        setVertexCol(index,Qt::transparent);
+        setVertexPos(index , x + (w - radius) , y + (h - radius) );
+        index++;
+    }
+
+
 
     calcTexturePos();
+    toOpenGLPos();
 
 }
 
@@ -54,7 +126,7 @@ void View::calcTexturePos()
     float x = 1.0f / (float)size().width();
     float y = 1.0f / (float)size().height();
 
-    for(int i = 0; i < 2*radius+9; i++)
+    for(int i = 0; i < topQuadCount+bottomQuadCount+2+6*cornerCount; i++)
     {
         setTextureCord(i,vertices[i].position[0]/size().width(), vertices[i].position[1]/size().height());
     }
@@ -67,7 +139,7 @@ void View::toOpenGLPos()
     float x = position().x();
     float y = position().y();
 
-    for(int i = 0; i < 2*radius+8 ; i++)
+    for(int i = 0; i < topQuadCount+bottomQuadCount+2+6*cornerCount ; i++)
     {
         setVertexPos(
              i,
