@@ -184,7 +184,7 @@ void Window::paintGL()
     drawBackground();
 
     // Draw all views
-    Q_FOREACH (View *view, compositor->views()) {
+    Q_FOREACH (View *view, compositor->views) {
 
         // Skip cursor
         if (view->isCursor())
@@ -225,7 +225,7 @@ void Window::resizeGL(int, int)
 View *Window::viewAt(const QPointF &point)
 {
     View *ret = 0;
-    Q_FOREACH (View *view, compositor->views()) {
+    Q_FOREACH (View *view, compositor->views) {
         if (view == dragIconView)
             continue;
         QRectF geom(view->position(), view->size());
@@ -242,7 +242,7 @@ void Window::startMove()
 
 void Window::startResize(int edge, bool anchored)
 {
-    initialSize = mouseView->windowSize();
+    initialSize = mouseView->size();
     grabState = ResizeGrab;
     resizeEdge = edge;
     resizeAnchored = anchored;
@@ -317,7 +317,7 @@ void Window::mouseMoveEvent(QMouseEvent *e)
         View *view = viewAt(e->localPos());
         compositor->handleDrag(view, e);
         if (dragIconView) {
-            dragIconView->setPosition(e->localPos() + dragIconView->offset());
+            dragIconView->setPosition(e->localPos() + dragIconView->position());
             update();
         }
     }

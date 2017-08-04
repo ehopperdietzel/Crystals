@@ -5,12 +5,10 @@ View::View(Compositor *compositor)
     , m_textureTarget(GL_TEXTURE_2D)
     , m_texture(0)
     , m_wlShellSurface(nullptr)
-    , m_xdgSurface(nullptr)
-    , m_xdgPopup(nullptr)
     , m_parentView(nullptr)
 {
 
-    setPosition(QPointF(300,300));
+
 }
 
 void View::calcVertexPos()
@@ -61,7 +59,7 @@ void View::calcVertexPos()
     int index = 15;
     cornerCount = 0;
 
-    for(float x = 0; x <= radius; x+=1.0f/borderQ)
+    for(float x = 0; x <= radius; x+=1.0f/cornerQuality)
     {
         float y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x - radius , 2 ));
         setVertexPos( index, x , y + (h - radius) );
@@ -74,7 +72,7 @@ void View::calcVertexPos()
     setVertexPos(index,radius,h-radius); // Right Corner Center
     index++;
 
-    for(float x = 0; x <= radius; x+=1.0f/borderQ)
+    for(float x = 0; x <= radius; x+=1.0f/cornerQuality)
     {
         float y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x , 2 ));
         setVertexCol(index,Qt::white);
@@ -84,7 +82,7 @@ void View::calcVertexPos()
 
 
     // Left corner smooth border
-    for(float x = 0; x <= radius; x+=1.0f/borderQ)
+    for(float x = 0; x <= radius; x+=1.0f/cornerQuality)
     {
         float y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x - radius , 2 ));
         setVertexPos( index, x , y + (h - radius) );
@@ -98,7 +96,7 @@ void View::calcVertexPos()
     }
 
     // Right corner smooth border
-    for(float x = 0; x <= radius; x+=1.0f/borderQ)
+    for(float x = 0; x <= radius; x+=1.0f/cornerQuality)
     {
         float y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x , 2 ));
         setVertexCol(index,Qt::white);
@@ -113,33 +111,6 @@ void View::calcVertexPos()
 
 }
 
-void View::calcTexturePos()
-{
-    float x = 1.0f / (float)size().width();
-    float y = 1.0f / (float)size().height();
-
-    for(int i = 0; i < topQuadCount+bottomQuadCount+2+6*cornerCount; i++)
-    {
-        setTextureCord(i,vertices[i].position[0]/size().width(), vertices[i].position[1]/size().height());
-    }
-}
-
-void View::toOpenGLPos()
-{
-    float h = m_compositor->m_window->height();
-    float w = m_compositor->m_window->width();
-    float x = position().x();
-    float y = position().y();
-
-    for(int i = 0; i < topQuadCount+bottomQuadCount+2+6*cornerCount ; i++)
-    {
-        setVertexPos(
-             i,
-             ( (2.0f / w) * (vertices[i].position[0] + x) ) - 1.0f,
-             1.0f - ( (2.0f / h) * (vertices[i].position[1] + y) )
-        );
-    }
-}
 
 void View::setVertexCol(int index, QColor color)
 {
@@ -167,25 +138,15 @@ QOpenGLTexture *View::getTexture()
     if (advance()) {
         QWaylandBufferRef buf = currentBuffer();
         m_texture = buf.toOpenGLTexture();
-        if (surface()) {
-            m_size = surface()->size();
-            m_origin = buf.origin() == QWaylandSurface::OriginTopLeft
-                    ? QOpenGLTextureBlitter::OriginTopLeft
-                    : QOpenGLTextureBlitter::OriginBottomLeft;
-        }
     }
 
     return m_texture;
 }
 
-QOpenGLTextureBlitter::Origin View::textureOrigin() const
-{
-    return m_origin;
-}
 
 QSize View::size() const
 {
-    return surface() ? surface()->size() : m_size;
+    return surface()->size();
 }
 
 bool View::isCursor() const
@@ -193,35 +154,11 @@ bool View::isCursor() const
     return surface() && surface()->isCursorSurface();
 }
 
-
-void View::onXdgSetMaximized()
+void View::positionChanged(QPoint pos)
 {
-    m_xdgSurface->sendMaximized(output()->geometry().size());
-    setPosition(QPoint(0, 0));
+    setPosition(pos);
 }
 
-void View::onXdgUnsetMaximized()
-{
-    m_xdgSurface->sendUnmaximized();
-}
 
-void View::onXdgSetFullscreen(QWaylandOutput* clientPreferredOutput)
-{
-    QWaylandOutput *outputToFullscreen = clientPreferredOutput
-            ? clientPreferredOutput
-            : output();
 
-    m_xdgSurface->sendFullscreen(outputToFullscreen->geometry().size());
-    setPosition(outputToFullscreen->position());
-}
 
-void View::onOffsetForNextFrame(const QPoint &offset)
-{
-    m_offset = offset;
-    setPosition(position() + offset);
-}
-
-void View::onXdgUnsetFullscreen()
-{
-    onXdgUnsetMaximized();
-}

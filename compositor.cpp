@@ -1,26 +1,14 @@
 #include "compositor.h"
 
-
-#ifndef GL_TEXTURE_EXTERNAL_OES
-#define GL_TEXTURE_EXTERNAL_OES 0x8D65
-#endif
-
-
-
-Compositor::Compositor(QWindow *window)
-    : QWaylandCompositor()
-    , m_window(window)
-    , m_wlShell(new QWaylandWlShell(this))
-    , m_xdgShell(new QWaylandXdgShellV5(this))
+Compositor::Compositor(QWindow *_window):QWaylandCompositor()
 {
-    connect(m_wlShell, &QWaylandWlShell::wlShellSurfaceCreated, this, &Compositor::onWlShellSurfaceCreated);
-    connect(m_xdgShell, &QWaylandXdgShellV5::xdgSurfaceCreated, this, &Compositor::onXdgSurfaceCreated);
-    connect(m_xdgShell, &QWaylandXdgShellV5::xdgPopupRequested, this, &Compositor::onXdgPopupRequested);
+    window = _window;
+    connect(wlShell, &QWaylandWlShell::wlShellSurfaceCreated, this, &Compositor::onWlShellSurfaceCreated);
 }
 
 void Compositor::create()
 {
-    QWaylandOutput *output = new QWaylandOutput(this, m_window);
+    QWaylandOutput *output = new QWaylandOutput(this, window);
     QWaylandOutputMode mode(QSize(900, 900), 60000);
     output->addMode(mode, true);
     QWaylandCompositor::create();
@@ -38,14 +26,13 @@ void Compositor::onSurfaceCreated(QWaylandSurface *surface)
     connect(surface, &QWaylandSurface::surfaceDestroyed, this, &Compositor::surfaceDestroyed);
     connect(surface, &QWaylandSurface::hasContentChanged, this, &Compositor::surfaceHasContentChanged);
     connect(surface, &QWaylandSurface::redraw, this, &Compositor::triggerRender);
-
     connect(surface, &QWaylandSurface::subsurfacePositionChanged, this, &Compositor::onSubsurfacePositionChanged);
     View *view = new View(this);
     view->setSurface(surface);
-    view->setOutput(outputFor(m_window));
-    m_views << view;
+    view->setOutput(outputFor(window));
+    connect(surface,SIGNAL(),view,SLOT(positionChanged(QPoint)));
+    views << view;
     connect(view, &QWaylandView::surfaceDestroyed, this, &Compositor::viewSurfaceDestroyed);
-    connect(surface, &QWaylandSurface::offsetForNextFrame, view, &View::onOffsetForNextFrame);
 }
 
 void Compositor::surfaceHasContentChanged()
@@ -70,14 +57,14 @@ void Compositor::viewSurfaceDestroyed()
 {
     View *view = qobject_cast<View*>(sender());
     view->setBufferLocked(true);
-    m_views.removeAll(view);
+    views.removeAll(view);
     delete view;
 }
 
 
 View * Compositor::findView(const QWaylandSurface *s) const
 {
-    Q_FOREACH (View* view, m_views) {
+    Q_FOREACH (View* view, views) {
         if (view->surface() == s)
             return view;
     }
@@ -96,38 +83,6 @@ void Compositor::onWlShellSurfaceCreated(QWaylandWlShellSurface *wlShellSurface)
     view->m_wlShellSurface = wlShellSurface;
 }
 
-void Compositor::onXdgSurfaceCreated(QWaylandXdgSurfaceV5 *xdgSurface)
-{
-    connect(xdgSurface, &QWaylandXdgSurfaceV5::startMove, this, &Compositor::onStartMove);
-    connect(xdgSurface, &QWaylandXdgSurfaceV5::startResize, this, &Compositor::onXdgStartResize);
-
-    View *view = findView(xdgSurface->surface());
-    Q_ASSERT(view);
-    view->m_xdgSurface = xdgSurface;
-
-    connect(xdgSurface, &QWaylandXdgSurfaceV5::setMaximized, view, &View::onXdgSetMaximized);
-    connect(xdgSurface, &QWaylandXdgSurfaceV5::setFullscreen, view, &View::onXdgSetFullscreen);
-    connect(xdgSurface, &QWaylandXdgSurfaceV5::unsetMaximized, view, &View::onXdgUnsetMaximized);
-    connect(xdgSurface, &QWaylandXdgSurfaceV5::unsetFullscreen, view, &View::onXdgUnsetFullscreen);
-}
-
-void Compositor::onXdgPopupRequested(QWaylandSurface *surface, QWaylandSurface *parent,
-                                     QWaylandSeat *seat, const QPoint &position,
-                                     const QWaylandResource &resource)
-{
-    Q_UNUSED(seat);
-
-    QWaylandXdgPopupV5 *xdgPopup = new QWaylandXdgPopupV5(m_xdgShell, surface, parent, position, resource);
-
-    View *view = findView(surface);
-    Q_ASSERT(view);
-
-    View *parentView = findView(parent);
-    Q_ASSERT(parentView);
-
-    view->setPosition(parentView->position() + position);
-    view->m_xdgPopup = xdgPopup;
-}
 
 void Compositor::onStartMove()
 {
@@ -139,13 +94,6 @@ void Compositor::onWlStartResize(QWaylandSeat *, QWaylandWlShellSurface::ResizeE
 {
     closePopups();
     emit startResize(int(edges), false);
-}
-
-void Compositor::onXdgStartResize(QWaylandSeat *seat,
-                                  QWaylandXdgSurfaceV5::ResizeEdge edges)
-{
-    Q_UNUSED(seat);
-    emit startResize(int(edges), true);
 }
 
 void Compositor::onSetTransient(QWaylandSurface *parent, const QPoint &relativeToParent, bool inactive)
@@ -195,7 +143,7 @@ void Compositor::onSubsurfacePositionChanged(const QPoint &position)
 
 void Compositor::triggerRender()
 {
-    m_window->requestUpdate();
+    window->requestUpdate();
 }
 
 void Compositor::startRender()
@@ -217,7 +165,7 @@ void Compositor::updateCursor()
     m_cursorView.advance();
     QImage image = m_cursorView.currentBuffer().image();
     if (!image.isNull())
-        m_window->setCursor(QCursor(QPixmap::fromImage(image), m_cursorHotspotX, m_cursorHotspotY));
+        window->setCursor(QCursor(QPixmap::fromImage(image), m_cursorHotspotX, m_cursorHotspotY));
 }
 
 void Compositor::adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY)
@@ -239,8 +187,7 @@ void Compositor::adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int
 
 void Compositor::closePopups()
 {
-    m_wlShell->closeAllPopups();
-    m_xdgShell->closeAllPopups();
+    wlShell->closeAllPopups();
 }
 
 void Compositor::handleMouseEvent(QWaylandView *target, QMouseEvent *me)
@@ -257,10 +204,7 @@ void Compositor::handleMouseEvent(QWaylandView *target, QMouseEvent *me)
         case QEvent::MouseButtonPress:
             input->sendMousePressEvent(me->button());
             if (surface != input->keyboardFocus()) {
-                if (surface == nullptr
-                        || surface->role() == QWaylandWlShellSurface::role()
-                        || surface->role() == QWaylandXdgSurfaceV5::role()
-                        || surface->role() == QWaylandXdgPopupV5::role()) {
+                if (surface == nullptr || surface->role() == QWaylandWlShellSurface::role()) {
                     input->setKeyboardFocus(surface);
                 }
             }
@@ -283,13 +227,6 @@ void Compositor::handleResize(View *target, const QSize &initialSize, const QPoi
         QSize newSize = wlShellSurface->sizeForResize(initialSize, delta, edges);
         wlShellSurface->sendConfigure(newSize, edges);
     }
-
-    QWaylandXdgSurfaceV5 *xdgSurface = target->m_xdgSurface;
-    if (xdgSurface) {
-        QWaylandXdgSurfaceV5::ResizeEdge edges = static_cast<QWaylandXdgSurfaceV5::ResizeEdge>(edge);
-        QSize newSize = xdgSurface->sizeForResize(initialSize, delta, edges);
-        xdgSurface->sendResizing(newSize);
-    }
 }
 
 void Compositor::startDrag()
@@ -297,7 +234,7 @@ void Compositor::startDrag()
     QWaylandDrag *currentDrag = defaultSeat()->drag();
     Q_ASSERT(currentDrag);
     View *iconView = findView(currentDrag->icon());
-    iconView->setPosition(m_window->mapFromGlobal(QCursor::pos()));
+    iconView->setPosition(window->mapFromGlobal(QCursor::pos()));
 
     emit dragStarted(iconView);
 }
@@ -313,20 +250,17 @@ void Compositor::handleDrag(View *target, QMouseEvent *me)
     QWaylandDrag *currentDrag = defaultSeat()->drag();
     currentDrag->dragMove(surface, pos);
     if (me->buttons() == Qt::NoButton) {
-        m_views.removeOne(findView(currentDrag->icon()));
+        views.removeOne(findView(currentDrag->icon()));
         currentDrag->drop();
     }
 }
 
 QWaylandClient *Compositor::popupClient() const
 {
-    auto client = m_wlShell->popupClient();
-    return client ? client : m_xdgShell->popupClient();
+    auto client = wlShell->popupClient();
+    return client;
 }
 
-// We only have a flat list of views, plus pointers from child to parent,
-// so maintaining a stacking order gets a bit complex. A better data
-// structure is left as an exercise for the reader.
 
 static int findEndOfChildTree(const QList<View*> &list, int index)
 {
@@ -342,10 +276,10 @@ static int findEndOfChildTree(const QList<View*> &list, int index)
 
 void Compositor::raise(View *view)
 {
-    int startPos = m_views.indexOf(view);
-    int endPos = findEndOfChildTree(m_views, startPos);
+    int startPos = views.indexOf(view);
+    int endPos = findEndOfChildTree(views, startPos);
 
-    int n = m_views.count();
+    int n = views.count();
     int tail =  n - endPos - 1;
 
     //bubble sort: move the child tree to the end of the list
@@ -353,6 +287,6 @@ void Compositor::raise(View *view)
         int source = endPos + 1 + i;
         int dest = startPos + i;
         for (int j = source; j > dest; j--)
-            m_views.swap(j, j-1);
+            views.swap(j, j-1);
     }
 }
