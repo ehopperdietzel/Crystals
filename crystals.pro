@@ -1,4 +1,4 @@
-QT += gui core waylandcompositor waylandcompositor
+QT += gui widgets core waylandcompositor waylandcompositor
 
 
 HEADERS += \

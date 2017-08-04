@@ -114,11 +114,6 @@ void View::calcVertexPos()
         index++;
     }
 
-
-
-    calcTexturePos();
-    toOpenGLPos();
-
 }
 
 void View::calcTexturePos()

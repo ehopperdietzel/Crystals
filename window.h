@@ -39,11 +39,15 @@ private:
     QOpenGLShaderProgram program;
     GLuint vertexBuffer, indexBuffer;
 
-    GLuint modSlot; //Vertex  pos
-    GLuint posSlot; //Vertex  pos
-    GLuint colSlot; //Vertex  col
-    GLuint corSlot; //Texture pos
-    GLuint texSlot; //Texture uni
+    // OpenGL Variables
+    GLuint screenSizeUniform; // Screen Size ( pixels )
+    GLuint offsetUniform; // View Position
+    GLuint isBackgroundUniform; // Check if is drawing background
+    GLuint viewSizeUniform; // View Size ( pixels )
+    GLuint posSlot; // Vertex  pos
+    GLuint colSlot; // Vertex  col
+    GLuint corSlot; // Texture pos
+    GLuint texSlot; // Texture uni
 
     Background *background = new Background(this);
 

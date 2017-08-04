@@ -38,7 +38,10 @@ void Window::initShaders()
     colSlot = glGetAttribLocation(program.programId(), "col");
     corSlot = glGetAttribLocation(program.programId(), "texCoordsIn");
     texSlot = glGetUniformLocation(program.programId(), "Texture");
-    modSlot = glGetUniformLocation(program.programId(), "onlyColor");
+    screenSizeUniform = glGetUniformLocation(program.programId(), "screenSize");
+    isBackgroundUniform = glGetUniformLocation(program.programId(), "isBackground");
+    offsetUniform = glGetUniformLocation(program.programId(), "viewOffset");
+    viewSizeUniform = glGetUniformLocation(program.programId(), "viewSize");
 
     // Enable shader attrs and uniforms
     glEnableVertexAttribArray(posSlot);
@@ -74,8 +77,7 @@ void Window::initializeGL()
 
 void Window::drawBackground()
 {
-
-    glUniform1i(modSlot,false);
+    glUniform1ui(isBackgroundUniform,true);
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, background->texture->textureId());
@@ -99,12 +101,13 @@ void Window::drawView(View *view)
 {
     view->calcVertexPos();
 
-    glUniform1i(modSlot,false);
+    glUniform1ui(isBackgroundUniform,false);
+    glUniform2f(offsetUniform,view->position().x(),view->position().y());
+    glUniform2f(viewSizeUniform,view->size().width(),view->size().height());
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, view->getTexture()->textureId());
     glUniform1i(texSlot, 0);
-
 
     glBufferData(GL_ARRAY_BUFFER, sizeof(view->vertices), view->vertices, GL_STATIC_DRAW);
 
@@ -166,6 +169,10 @@ void Window::paintGL()
 
     // Set blend mode
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Asign the screen size uniform
+    glUniform2f(screenSizeUniform,width(),height());
+
 
     // Draw Background Image
     drawBackground();

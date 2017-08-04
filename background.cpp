@@ -1,12 +1,13 @@
 #include "background.h"
 
-
-
+// Constructor
 Background::Background(QOpenGLWindow *_window)
 {
+    // Store the window pointer
     window = _window;
 }
 
+// Assign position to a vertex
 void Background::setVertexPos(int index, float x, float y, float z)
 {
     vertices[index].position[0] = x;
@@ -14,18 +15,20 @@ void Background::setVertexPos(int index, float x, float y, float z)
     vertices[index].position[2] = z;
 }
 
+// Assign texture position to a vertex
 void Background::setTextureCord(int index, float x, float y)
 {
     vertices[index].texture[0] = x;
     vertices[index].texture[1] = y;
 }
 
+// Set view mode ( Solid color, gradient, texture )
 void Background::setMode(ViewMode mode)
 {
     viewMode = mode;
-
 }
 
+// Set color to all vertices
 void Background::setColor(QColor color)
 {
     for( int i = 0; i <= 4; i++)
@@ -38,11 +41,13 @@ void Background::setColor(QColor color)
 
 }
 
+// Set texture
 void Background::setImage(QOpenGLTexture *_texture)
 {
     texture = _texture;
 }
 
+// Set image mode ( Fit Screen, Full Screen, etc )
 void Background::setImageMode(ImageMode mode)
 {
     imageMode = mode;
@@ -53,8 +58,8 @@ void Background::setImageMode(ImageMode mode)
     case ResizeToFill:
 
         //Set Vertex Position
-        setVertexPos(0,-1, 1);
-        setVertexPos(1,-1,-1);
+        setVertexPos(0, 0, 0);
+        setVertexPos(1, 0,-1);
         setVertexPos(2, 1,-1);
         setVertexPos(3, 1, 1);
 
