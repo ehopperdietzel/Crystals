@@ -12,7 +12,7 @@ View::View(Compositor *compositor)
 {
 
 
-
+    setPosition(QPointF(300,300));
 
 }
 
