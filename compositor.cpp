@@ -18,10 +18,6 @@ Compositor::Compositor(QWindow *window)
     connect(m_xdgShell, &QWaylandXdgShellV5::xdgPopupRequested, this, &Compositor::onXdgPopupRequested);
 }
 
-Compositor::~Compositor()
-{
-}
-
 void Compositor::create()
 {
     QWaylandOutput *output = new QWaylandOutput(this, m_window);
@@ -74,14 +70,6 @@ void Compositor::viewSurfaceDestroyed()
 {
     View *view = qobject_cast<View*>(sender());
     view->setBufferLocked(true);
-    view->startAnimation(false);
-    connect(view, &View::animationDone, this, &Compositor::viewAnimationDone);
-}
-
-
-void Compositor::viewAnimationDone()
-{
-    View *view = qobject_cast<View*>(sender());
     m_views.removeAll(view);
     delete view;
 }
@@ -106,7 +94,6 @@ void Compositor::onWlShellSurfaceCreated(QWaylandWlShellSurface *wlShellSurface)
     View *view = findView(wlShellSurface->surface());
     Q_ASSERT(view);
     view->m_wlShellSurface = wlShellSurface;
-    view->startAnimation(true);
 }
 
 void Compositor::onXdgSurfaceCreated(QWaylandXdgSurfaceV5 *xdgSurface)
@@ -122,7 +109,6 @@ void Compositor::onXdgSurfaceCreated(QWaylandXdgSurfaceV5 *xdgSurface)
     connect(xdgSurface, &QWaylandXdgSurfaceV5::setFullscreen, view, &View::onXdgSetFullscreen);
     connect(xdgSurface, &QWaylandXdgSurfaceV5::unsetMaximized, view, &View::onXdgUnsetMaximized);
     connect(xdgSurface, &QWaylandXdgSurfaceV5::unsetFullscreen, view, &View::onXdgUnsetFullscreen);
-    view->startAnimation(true);
 }
 
 void Compositor::onXdgPopupRequested(QWaylandSurface *surface, QWaylandSurface *parent,
@@ -187,7 +173,6 @@ void Compositor::onSetPopup(QWaylandSeat *seat, QWaylandSurface *parent, const Q
         View *parentView = findView(parent);
         if (parentView)
             view->setPosition(parentView->position() + relativeToParent);
-        view->cancelAnimation();
     }
 }
 

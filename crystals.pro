@@ -1,4 +1,4 @@
-QT += gui widgets core waylandcompositor waylandcompositor
+QT += gui network core waylandcompositor
 
 
 HEADERS += \
@@ -6,13 +6,17 @@ HEADERS += \
     compositor.h \
     background.h \
     headers.h \
-    view.h
+    view.h \
+    server.h \
+    socket.h
 
 SOURCES += main.cpp \
     window.cpp \
     compositor.cpp \
     background.cpp \
-    view.cpp
+    view.cpp \
+    server.cpp \
+    socket.cpp
 
 DISTFILES += \
     fshader.glsl \

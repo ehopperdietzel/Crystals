@@ -101,6 +101,12 @@ void Window::drawView(View *view)
 {
     view->calcVertexPos();
 
+    /*
+    unsigned char pixels[4];
+    glReadPixels(view->position().x(),view->position().y(),1,1,GL_RGB,GL_UNSIGNED_BYTE,&pixels);
+    qDebug()<<pixels[0];
+    */
+
     glUniform1ui(isBackgroundUniform,false);
     glUniform2f(offsetUniform,view->position().x(),view->position().y());
     glUniform2f(viewSizeUniform,view->size().width(),view->size().height());

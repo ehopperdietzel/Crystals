@@ -6,6 +6,9 @@
 #include <QPointer>
 #include <QtMath>
 
+#include <QLocalServer>
+#include <QLocalSocket>
+
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QTouchEvent>
@@ -51,5 +54,8 @@ enum ViewMode { Image, Color, Gradient };
 
 // Background image size mode
 enum ImageMode { ResizeToFill, KeepRatioToFill };
+
+// IPC messages
+enum MessageType{ Caca };
 
 #endif

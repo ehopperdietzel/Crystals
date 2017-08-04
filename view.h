@@ -44,19 +44,6 @@ public:
     QSize windowSize() { return m_xdgSurface ? m_xdgSurface->windowGeometry().size() :  surface() ? surface()->size() : m_size; }
     QPoint offset() const { return m_offset; }
 
-    qreal animationFactor() const {return m_animationFactor; }
-    void setAnimationFactor(qreal f) {m_animationFactor = f; }
-
-
-
-signals:
-    void animationDone();
-
-protected:
-    void timerEvent(QTimerEvent *event);
-
-private:
-    friend class Compositor;
     Compositor *m_compositor;
     GLenum m_textureTarget;
     QOpenGLTexture *m_texture;
@@ -68,9 +55,7 @@ private:
     QWaylandXdgPopupV5 *m_xdgPopup;
     View *m_parentView;
     QPoint m_offset;
-    qreal m_animationFactor;
-    QBasicTimer m_animationTimer;
-    bool m_animationCountUp;
+
 
 public slots:
     void onXdgSetMaximized();
@@ -78,10 +63,6 @@ public slots:
     void onXdgSetFullscreen(QWaylandOutput *output);
     void onXdgUnsetFullscreen();
     void onOffsetForNextFrame(const QPoint &offset);
-
-    void startAnimation(bool countUp);
-    void cancelAnimation();
-
 
 };
 

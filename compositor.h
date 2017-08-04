@@ -19,7 +19,6 @@ class Compositor : public QWaylandCompositor
     Q_OBJECT
 public:
     Compositor(QWindow *window);
-    ~Compositor();
     void create() override;
 
     QWindow *m_window;
@@ -71,7 +70,6 @@ private slots:
     void onSubsurfacePositionChanged(const QPoint &position);
 
     void updateCursor();
-    void viewAnimationDone();
 private:
     View *findView(const QWaylandSurface *s) const;
     QList<View*> m_views;

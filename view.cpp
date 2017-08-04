@@ -8,12 +8,9 @@ View::View(Compositor *compositor)
     , m_xdgSurface(nullptr)
     , m_xdgPopup(nullptr)
     , m_parentView(nullptr)
-    , m_animationFactor(1.0)
 {
 
-
     setPosition(QPointF(300,300));
-
 }
 
 void View::calcVertexPos()
@@ -200,11 +197,6 @@ bool View::isCursor() const
 void View::onXdgSetMaximized()
 {
     m_xdgSurface->sendMaximized(output()->geometry().size());
-
-    // An improvement here, would have been to wait for the commit after the ack_configure for the
-    // request above before moving the window. This would have prevented the window from being
-    // moved until the contents of the window had actually updated. This improvement is left as an
-    // exercise for the reader.
     setPosition(QPoint(0, 0));
 }
 
@@ -220,11 +212,6 @@ void View::onXdgSetFullscreen(QWaylandOutput* clientPreferredOutput)
             : output();
 
     m_xdgSurface->sendFullscreen(outputToFullscreen->geometry().size());
-
-    // An improvement here, would have been to wait for the commit after the ack_configure for the
-    // request above before moving the window. This would have prevented the window from being
-    // moved until the contents of the window had actually updated. This improvement is left as an
-    // exercise for the reader.
     setPosition(outputToFullscreen->position());
 }
 
@@ -232,44 +219,6 @@ void View::onOffsetForNextFrame(const QPoint &offset)
 {
     m_offset = offset;
     setPosition(position() + offset);
-}
-
-
-void View::timerEvent(QTimerEvent *event)
-{
-    if (event->timerId() != m_animationTimer.timerId())
-        return;
-
-    m_compositor->triggerRender();
-
-    if (m_animationCountUp) {
-        m_animationFactor += .08;
-        if (m_animationFactor > 1.0) {
-            m_animationFactor = 1.0;
-            m_animationTimer.stop();
-            emit animationDone();
-        }
-    } else {
-        m_animationFactor -= .08;
-        if (m_animationFactor < 0.01) {
-            m_animationFactor = 0.01;
-            m_animationTimer.stop();
-            emit animationDone();
-        }
-    }
-}
-
-void View::startAnimation(bool countUp)
-{
-    m_animationCountUp = countUp;
-    m_animationFactor = countUp ? .1 : 1.0;
-    m_animationTimer.start(20, this);
-}
-
-void View::cancelAnimation()
-{
-    m_animationFactor = 1.0;
-    m_animationTimer.stop();
 }
 
 void View::onXdgUnsetFullscreen()
