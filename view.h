@@ -33,7 +33,6 @@ public:
     void setPosition(const QPointF &pos) { m_position = pos; }
     QSize size() const;
     bool isCursor() const;
-    bool hasShell() const { return m_wlShellSurface; }
     void setParentView(View *parent) { m_parentView = parent; }
     View *parentView() const { return m_parentView; }
 
@@ -41,11 +40,10 @@ public:
     GLenum m_textureTarget;
     QOpenGLTexture *m_texture;
     QPointF m_position;
-    QWaylandWlShellSurface *m_wlShellSurface;
     View *m_parentView;
 
-public slots:
-    void positionChanged(QPoint pos);
+    QSize previusSize;
+
 
 };
 

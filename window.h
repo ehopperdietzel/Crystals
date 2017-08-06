@@ -12,8 +12,9 @@ class QOpenGLTexture;
 
 class Window : public QOpenGLWindow
 {
+    Q_OBJECT
 public:
-    void setCompositor(Compositor *comp);
+    Window(Compositor *comp);
     void setBackground(QString path);
 
 protected:
@@ -39,7 +40,7 @@ private:
     QOpenGLShaderProgram program;
     GLuint vertexBuffer, indexBuffer;
 
-    // OpenGL Variables
+    // OpenGL Variables Location
     GLuint screenSizeUniform; // Screen Size ( pixels )
     GLuint offsetUniform; // View Position
     GLuint isBackgroundUniform; // Check if is drawing background
@@ -47,7 +48,6 @@ private:
     GLuint posSlot; // Vertex  pos
     GLuint colSlot; // Vertex  col
     GLuint corSlot; // Texture pos
-    GLuint texSlot; // Texture uni
 
     Background *background = new Background(this);
 

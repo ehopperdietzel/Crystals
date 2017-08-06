@@ -58,4 +58,7 @@ enum ImageMode { ResizeToFill, KeepRatioToFill };
 // IPC messages
 enum MessageType{ Caca };
 
+// View type
+enum ViewType{ Paradiso, TitleBar, Roller };
+
 #endif

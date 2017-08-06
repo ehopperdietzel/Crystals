@@ -4,10 +4,8 @@ View::View(Compositor *compositor)
     : m_compositor(compositor)
     , m_textureTarget(GL_TEXTURE_2D)
     , m_texture(0)
-    , m_wlShellSurface(nullptr)
     , m_parentView(nullptr)
 {
-
 
 }
 
@@ -154,10 +152,7 @@ bool View::isCursor() const
     return surface() && surface()->isCursorSurface();
 }
 
-void View::positionChanged(QPoint pos)
-{
-    setPosition(pos);
-}
+
 
 
 

@@ -1,16 +1,20 @@
 #include "window.h"
 #include "compositor.h"
 
-
-
-void Window::setCompositor(Compositor *comp) {
-
+Window::Window(Compositor *comp)
+{
+    // Save the compositor reference
     compositor = comp;
-    connect(compositor, &Compositor::startMove, this, &Window::startMove);
-    connect(compositor, &Compositor::startResize, this, &Window::startResize);
-    connect(compositor, &Compositor::dragStarted, this, &Window::startDrag);
-}
 
+    // Resize event
+    connect(compositor, &Compositor::startResize, this, &Window::startResize);
+
+    // Drag event
+    connect(compositor, &Compositor::dragStarted, this, &Window::startDrag);
+
+    // Show window
+    show();
+}
 
 void Window::initShaders()
 {
@@ -33,33 +37,40 @@ void Window::initShaders()
     // Select the current shader program
     glUseProgram(program.programId());
 
-    // Get shader attrs and uniforms locations
+    // Get shader attributes locations
     posSlot = glGetAttribLocation(program.programId(), "pos");
     colSlot = glGetAttribLocation(program.programId(), "col");
     corSlot = glGetAttribLocation(program.programId(), "texCoordsIn");
-    texSlot = glGetUniformLocation(program.programId(), "Texture");
-    screenSizeUniform = glGetUniformLocation(program.programId(), "screenSize");
-    isBackgroundUniform = glGetUniformLocation(program.programId(), "isBackground");
-    offsetUniform = glGetUniformLocation(program.programId(), "viewOffset");
-    viewSizeUniform = glGetUniformLocation(program.programId(), "viewSize");
 
-    // Enable shader attrs and uniforms
+    // Enable shader attributes
     glEnableVertexAttribArray(posSlot);
     glEnableVertexAttribArray(colSlot);
     glEnableVertexAttribArray(corSlot);
+
+    // Get shader uniforms locations
+    screenSizeUniform   = glGetUniformLocation(program.programId(), "screenSize");
+    isBackgroundUniform = glGetUniformLocation(program.programId(), "isBackground");
+    offsetUniform       = glGetUniformLocation(program.programId(), "viewOffset");
+    viewSizeUniform     = glGetUniformLocation(program.programId(), "viewSize");
 
 }
 
 
 void Window::initializeGL()
 {
-
     // Create a vertex buffer
     glGenBuffers(1, &vertexBuffer);
-
-    // Create a vertex triangles index buffer
-    glGenBuffers(1, &indexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+
+    // Create a vertex index buffer
+    glGenBuffers(1, &indexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
+
+    // Sets the active texture location
+    glActiveTexture(GL_TEXTURE0);
+
+    // Send the triangles indices list for the background
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(background->Indices), background->Indices, GL_STATIC_DRAW);
 
     // Set default background image
     setBackground("/home/e/wallpaper.jpg");
@@ -71,56 +82,66 @@ void Window::initializeGL()
     initShaders();
 
     // Set screen clear color
-    glClearColor(1, 1, 1, 1);
+    glClearColor(1, 1, 1, 1); // White
 
+    // Set the data index and size of each vertex
+    glVertexAttribPointer(posSlot, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0); // Position
+    glVertexAttribPointer(colSlot, 4, GL_FLOAT, GL_FALSE,sizeof(Vertex), (GLvoid*) (sizeof(float) * 3)); // Color
+    glVertexAttribPointer(corSlot, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*) (sizeof(float) * 7)); // Texture Cords
 }
 
 void Window::drawBackground()
 {
+    // Tells OpenGL it is the background
     glUniform1ui(isBackgroundUniform,true);
 
-    glActiveTexture(GL_TEXTURE0);
+    // Selects the background texture
     glBindTexture(GL_TEXTURE_2D, background->texture->textureId());
-    glUniform1i(texSlot, 0);
 
-    //glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
+    // Send the vertex list
     glBufferData(GL_ARRAY_BUFFER, sizeof(background->vertices), background->vertices, GL_STATIC_DRAW);
 
-    glGenBuffers(1, &indexBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(background->Indices), background->Indices, GL_STATIC_DRAW);
-
-    glVertexAttribPointer(posSlot, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
-    glVertexAttribPointer(colSlot, 4, GL_FLOAT, GL_FALSE,sizeof(Vertex), (GLvoid*) (sizeof(float) * 3));
-    glVertexAttribPointer(corSlot, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*) (sizeof(float) * 7));
-
+    //Draw Background
     glDrawElements(GL_TRIANGLES, sizeof(GLubyte)*6,GL_UNSIGNED_BYTE, 0);
 }
 
 void Window::drawView(View *view)
 {
-    view->calcVertexPos();
 
+    // Calculates view vertices if size has changed
+    if(view->previusSize != view->size())
+    {
+        // Saves the current view size
+        view->previusSize = view->size();
+
+        // Calculates the view vertices
+        view->calcVertexPos();
+    }
+
+
+    // Gets background screenshot
     /*
     unsigned char pixels[4];
     glReadPixels(view->position().x(),view->position().y(),1,1,GL_RGB,GL_UNSIGNED_BYTE,&pixels);
     qDebug()<<pixels[0];
     */
 
+    // Tells OpenGL it is not the background
     glUniform1ui(isBackgroundUniform,false);
+
+    // Tells OpenGL the view position
     glUniform2f(offsetUniform,view->position().x(),view->position().y());
+
+    // Tells OpenGL the view size
     glUniform2f(viewSizeUniform,view->size().width(),view->size().height());
 
-    glActiveTexture(GL_TEXTURE0);
+    // Select current view texture
     glBindTexture(GL_TEXTURE_2D, view->getTexture()->textureId());
-    glUniform1i(texSlot, 0);
 
+    // Sends the vertices list
     glBufferData(GL_ARRAY_BUFFER, sizeof(view->vertices), view->vertices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(posSlot, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0);
-    glVertexAttribPointer(colSlot, 4, GL_FLOAT, GL_FALSE,sizeof(Vertex), (GLvoid*) (sizeof(float) * 3));
-    glVertexAttribPointer(corSlot, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*) (sizeof(float) * 7));
-
+    // Draw view
     glDrawArrays(GL_TRIANGLE_STRIP,0,view->topQuadCount);
     glDrawArrays(GL_TRIANGLE_STRIP,view->topQuadCount, view->bottomQuadCount);
     glDrawArrays(GL_TRIANGLE_FAN,view->topQuadCount + view->bottomQuadCount, view->cornerCount*2 + 2);
@@ -178,7 +199,6 @@ void Window::paintGL()
 
     // Asign the screen size uniform
     glUniform2f(screenSizeUniform,width(),height());
-
 
     // Draw Background Image
     drawBackground();
@@ -263,7 +283,6 @@ void Window::mousePressEvent(QMouseEvent *e)
     if (mouseView.isNull()) {
         mouseView = viewAt(e->localPos());
         if (!mouseView) {
-            compositor->closePopups();
             return;
         }
         if (e->modifiers() == Qt::AltModifier || e->modifiers() == Qt::MetaModifier)
@@ -310,7 +329,6 @@ void Window::mouseMoveEvent(QMouseEvent *e)
         break;
     case ResizeGrab: {
         QPoint delta = (e->localPos() - initialMousePos).toPoint();
-        compositor->handleResize(mouseView, initialSize, delta, resizeEdge);
     }
         break;
     case DragGrab: {
