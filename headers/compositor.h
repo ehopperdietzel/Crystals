@@ -4,13 +4,16 @@
 #include "headers.h"
 #include "window.h"
 #include "view.h"
+#include "socket.h"
 
 QT_BEGIN_NAMESPACE
 
+// Incoming message types
 
 class QOpenGLTexture;
 class Compositor;
 class View;
+class Socket;
 
 
 class Compositor : public QWaylandCompositor
@@ -18,9 +21,12 @@ class Compositor : public QWaylandCompositor
     Q_OBJECT
 public:
     Compositor();
+    QLocalServer *server = new QLocalServer(this); // IPC for views
     Window *window = new Window(this);
     QWaylandOutput *output = new QWaylandOutput(this, window);
+    QWaylandWlShell *wlShell = new QWaylandWlShell(this);
     QList<View*> views;
+    QList<Socket*> sockets;
     QWaylandView cursor;
     int m_cursorHotspotX;
     int m_cursorHotspotY;
@@ -34,6 +40,9 @@ public:
     void handleResize(View *target, const QSize &initialSize, const QPoint &delta, int edge);
     void handleDrag(View *target, QMouseEvent *me);
 
+    View *findViewById(int id);
+    Socket *findSocketByPId(int id);
+
 protected:
     void adjustCursorSurface(QWaylandSurface *surface, int hotspotX, int hotspotY);
 
@@ -43,16 +52,22 @@ signals:
 
 public slots:
     void triggerRender();
+    void newClientConnected();
+    void newClientMessage();
 
 private slots:
+    void socketDisconnected();
     void surfaceHasContentChanged();
     void surfaceDestroyed();
     void viewSurfaceDestroyed();
 
     void startDrag();
 
+    void titleChanged();
+
 
     void onSurfaceCreated(QWaylandSurface *surface);
+    void onWlShellCreated(QWaylandWlShellSurface *wlShellSurface);
 
 
     void onSubsurfaceChanged(QWaylandSurface *child, QWaylandSurface *parent);

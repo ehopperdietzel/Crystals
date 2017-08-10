@@ -1,29 +1,27 @@
 QT += gui network core waylandcompositor
 
+DISTFILES += \
+    res/shaders/fshader.glsl \
+    res/shaders/vshader.glsl
 
 HEADERS += \
-    window.h \
-    compositor.h \
-    background.h \
-    headers.h \
-    view.h \
-    server.h \
-    socket.h
+    headers/background.h \
+    headers/compositor.h \
+    headers/headers.h \
+    headers/server.h \
+    headers/socket.h \
+    headers/view.h \
+    headers/window.h
 
-SOURCES += main.cpp \
-    window.cpp \
-    compositor.cpp \
-    background.cpp \
-    view.cpp \
-    server.cpp \
-    socket.cpp
-
-DISTFILES += \
-    fshader.glsl \
-    vshader.glsl
+SOURCES += \
+    sources/background.cpp \
+    sources/compositor.cpp \
+    sources/main.cpp \
+    sources/socket.cpp \
+    sources/view.cpp \
+    sources/window.cpp
 
 RESOURCES += \
-    res.qrc
-
+    res/resources.qrc
 
 

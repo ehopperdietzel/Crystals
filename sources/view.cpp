@@ -1,12 +1,9 @@
-#include "view.h"
+#include "headers/view.h"
 
 View::View(Compositor *compositor)
-    : m_compositor(compositor)
-    , m_textureTarget(GL_TEXTURE_2D)
-    , m_texture(0)
+    : compositor(compositor)
     , m_parentView(nullptr)
 {
-
 }
 
 void View::calcVertexPos()
@@ -135,10 +132,10 @@ QOpenGLTexture *View::getTexture()
 {
     if (advance()) {
         QWaylandBufferRef buf = currentBuffer();
-        m_texture = buf.toOpenGLTexture();
+        texture = buf.toOpenGLTexture();
     }
 
-    return m_texture;
+    return texture;
 }
 
 

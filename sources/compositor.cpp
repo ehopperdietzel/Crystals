@@ -1,10 +1,12 @@
-#include "compositor.h"
+#include "headers/compositor.h"
 
 Compositor::Compositor():QWaylandCompositor()
 {
     create();
 
     setScreenResolution(QSize(1500,800));
+    server->removeServer("com.cuarzo.crystals");
+    server->listen("com.cuarzo.crystals");
 
     connect(this, &QWaylandCompositor::surfaceCreated, this, &Compositor::onSurfaceCreated);
     connect(this, &QWaylandCompositor::subsurfaceChanged, this, &Compositor::onSubsurfaceChanged);
@@ -12,8 +14,108 @@ Compositor::Compositor():QWaylandCompositor()
     connect(defaultSeat(), &QWaylandSeat::cursorSurfaceRequest, this, &Compositor::adjustCursorSurface);
     connect(defaultSeat()->drag(), &QWaylandDrag::dragStarted, this, &Compositor::startDrag);
 
+    connect(wlShell,&QWaylandWlShell::wlShellSurfaceCreated,this,&Compositor::onWlShellCreated);
+
+    connect(server,SIGNAL(newConnection()),this,SLOT(newClientConnected()));
+
 }
 
+// New client Unix socket
+
+void Compositor::newClientConnected()
+{
+    Socket *socket = new Socket(server->nextPendingConnection());
+    sockets.append(socket);
+    connect(socket,SIGNAL(disconnected()),this,SLOT(socketDisconnected()));
+    connect(socket,SIGNAL(messageIn()),this,SLOT(newClientMessage()));
+    qDebug()<<"Client Connected";
+}
+
+// New client Unix Message
+
+void Compositor::newClientMessage()
+{
+    // Get the socket
+    Socket *socket = qobject_cast<Socket *>(sender());
+
+    // Store the message
+    QByteArray data = socket->socket->readAll();
+
+    // Message type
+    unsigned int type = *(unsigned int*)data.mid(0,sizeof(unsigned int)).data();
+
+    switch (type) {
+
+        // Register App
+        case REGISTER_APP:{
+
+            // Parse the message
+            RegisterAppStruct *message = (RegisterAppStruct*)data.data();
+
+            // Socket related to
+            socket->processID = message->pid;
+
+            // Send response
+            RegisteredAppStruct reply;
+
+            // Copy message to a char pointer
+            char data[sizeof(RegisteredAppStruct)];
+            memcpy(data,&reply,sizeof(RegisteredAppStruct));
+
+            // Send message
+            socket->socket->write(data,sizeof(RegisteredAppStruct));
+            qDebug()<<"App registered PID: " + QString::number(socket->processID);
+
+        }break;
+
+        // Register a surface
+        case SURFACE_CONFIG:{
+
+            // Parse the message
+            SurfaceConfigStruct *message = (SurfaceConfigStruct*)data.data();
+
+            // Find related view
+            View *view = findViewById(message->id);
+
+            // Assign position
+            view->setPosition(QPointF(message->x,message->y));
+
+            // Assign role
+            view->mode = message->role;
+
+            qDebug() << message->title;
+
+        }break;
+
+        // Register a surface
+        case SURFACE_POS:{
+
+            // Parse the message again
+            SurfacePosStruct *msg = (SurfacePosStruct*)data.data();
+
+            // Find equivalent view
+            Q_FOREACH (View* view, views) {
+                if (view->surfaceId == msg->id && socket->processID == view->surface()->client()->processId())
+                {
+                    qDebug()<<QString::number(msg->id)+" Surface Pos Changed to ("+QString::number(msg->x)+","+QString::number(msg->y)+")";
+                    view->setPosition(QPointF(msg->x,msg->y));
+                    triggerRender();
+                    return;
+                }
+            }
+
+        }break;
+    }
+
+}
+
+void Compositor::socketDisconnected()
+{
+    // Get the socket
+    Socket *socket = qobject_cast<Socket *>(sender());
+
+    delete sockets.takeAt(sockets.indexOf(socket));
+}
 
 void Compositor::onSurfaceCreated(QWaylandSurface *surface)
 {
@@ -26,17 +128,25 @@ void Compositor::onSurfaceCreated(QWaylandSurface *surface)
     view->setOutput(outputFor(window));
     views << view;
     connect(view, &QWaylandView::surfaceDestroyed, this, &Compositor::viewSurfaceDestroyed);
+
+}
+
+void Compositor::onWlShellCreated(QWaylandWlShellSurface *wlShellSurface)
+{
+    connect(wlShellSurface,SIGNAL(titleChanged()),this,SLOT(titleChanged()));
 }
 
 void Compositor::surfaceHasContentChanged()
 {
     QWaylandSurface *surface = qobject_cast<QWaylandSurface *>(sender());
+
     if (surface->hasContent()) {
         if (surface->role() == QWaylandWlShellSurface::role()){
             defaultSeat()->setKeyboardFocus(surface);
         }
     }
     triggerRender();
+
 }
 
 void Compositor::surfaceDestroyed()
@@ -72,7 +182,6 @@ void Compositor::onSubsurfaceChanged(QWaylandSurface *child, QWaylandSurface *pa
 
 void Compositor::onSubsurfacePositionChanged(const QPoint &position)
 {
-    qDebug()<<position;
     QWaylandSurface *surface = qobject_cast<QWaylandSurface*>(sender());
     if (!surface)
         return;
@@ -86,6 +195,8 @@ void Compositor::triggerRender()
 {
     window->requestUpdate();
 }
+
+
 
 void Compositor::startRender()
 {
@@ -164,6 +275,34 @@ void Compositor::startDrag()
     emit dragStarted(iconView);
 }
 
+// Wrongly used to identify a surface
+void Compositor::titleChanged()
+{
+    QWaylandWlShellSurface *surface = qobject_cast< QWaylandWlShellSurface*>(sender());
+
+    // Find equivalent view
+    View* view = findView(surface->surface());
+
+    // Asign the ID
+    view->surfaceId = surface->title().toInt();
+
+    // Send response
+    RegisteredSurfaceStruct reply;
+    reply.id = view->surfaceId;
+
+    // Copy message to a char pointer
+    char data[sizeof(RegisteredSurfaceStruct)];
+    memcpy(data,&reply,sizeof(RegisteredSurfaceStruct));
+
+    // Send message
+    findSocketByPId(surface->surface()->client()->processId())->socket->write(data,sizeof(RegisteredSurfaceStruct));
+
+    qDebug() << "Surface Registered sId: "+QString::number(view->surfaceId);
+    return;
+
+
+}
+
 void Compositor::handleDrag(View *target, QMouseEvent *me)
 {
     QPointF pos = me->localPos();
@@ -177,6 +316,24 @@ void Compositor::handleDrag(View *target, QMouseEvent *me)
     if (me->buttons() == Qt::NoButton) {
         views.removeOne(findView(currentDrag->icon()));
         currentDrag->drop();
+    }
+}
+
+View *Compositor::findViewById(int id)
+{
+    Q_FOREACH(View *view,views)
+    {
+        if(view->surfaceId == id)
+            return view;
+    }
+}
+
+Socket *Compositor::findSocketByPId(int id)
+{
+    Q_FOREACH(Socket *socket,sockets)
+    {
+        if(socket->processID == id)
+            return socket;
     }
 }
 

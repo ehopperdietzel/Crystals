@@ -1,4 +1,4 @@
-#include "background.h"
+#include "headers/background.h"
 
 // Constructor
 Background::Background(QOpenGLWindow *_window)

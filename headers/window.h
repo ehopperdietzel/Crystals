@@ -58,8 +58,7 @@ private:
     void drawBackground();
     void drawView(View *view);
     void sendMouseEvent(QMouseEvent *e, View *target);
-    static QPointF getAnchoredPosition(const QPointF &anchorPosition, int resizeEdge, const QSize &windowSize);
-    static QPointF getAnchorPosition(const QPointF &position, int resizeEdge, const QSize &windowSize);
+
 
     Compositor *compositor;
     QPointer<View> mouseView;

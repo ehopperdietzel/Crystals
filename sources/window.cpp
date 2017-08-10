@@ -1,5 +1,5 @@
-#include "window.h"
-#include "compositor.h"
+#include "headers/window.h"
+#include "headers/compositor.h"
 
 Window::Window(Compositor *comp)
 {
@@ -19,11 +19,11 @@ Window::Window(Compositor *comp)
 void Window::initShaders()
 {
     // Compile vertex shader
-    if (!program.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/glsl/vshader.glsl"))
+    if (!program.addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/vshader.glsl"))
         close();
 
     // Compile fragment shader
-    if (!program.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/glsl/fshader.glsl"))
+    if (!program.addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/fshader.glsl"))
         close();
 
     // Link shader pipeline
@@ -164,23 +164,6 @@ void Window::setBackground(QString path)
 }
 
 
-QPointF Window::getAnchorPosition(const QPointF &position, int resizeEdge, const QSize &windowSize)
-{
-    float y = position.y();
-    if (resizeEdge & QWaylandXdgSurfaceV5::ResizeEdge::TopEdge)
-        y += windowSize.height();
-
-    float x = position.x();
-    if (resizeEdge & QWaylandXdgSurfaceV5::ResizeEdge::LeftEdge)
-        x += windowSize.width();
-
-    return QPointF(x, y);
-}
-
-QPointF Window::getAnchoredPosition(const QPointF &anchorPosition, int resizeEdge, const QSize &windowSize)
-{
-    return anchorPosition - getAnchorPosition(QPointF(), resizeEdge, windowSize);
-}
 
 void Window::paintGL()
 {
@@ -227,27 +210,37 @@ void Window::paintGL()
             // Skip if size is 0
             if (!s.isEmpty()) {
 
+                // Draw view
                 drawView(view);
 
             }
         }
     }
 
+    // Finishes rendering
     compositor->endRender();
 }
 
 void Window::resizeGL(int, int)
 {
+    // Adjust background
     if(background->viewMode == Image)
         background->setImageMode(background->imageMode);
 }
 
 View *Window::viewAt(const QPointF &point)
 {
+    // Store the view
     View *ret = 0;
-    Q_FOREACH (View *view, compositor->views) {
+
+    // Loop all views
+    Q_FOREACH (View *view, compositor->views)
+    {
+        // Skip if is the drag icon
         if (view == dragIconView)
             continue;
+
+        // Check if point is in view rect
         QRectF geom(view->position(), view->size());
         if (geom.contains(point))
             ret = view;
@@ -266,7 +259,6 @@ void Window::startResize(int edge, bool anchored)
     grabState = ResizeGrab;
     resizeEdge = edge;
     resizeAnchored = anchored;
-    resizeAnchorPosition = getAnchorPosition(mouseView->position(), edge, mouseView->surface()->size());
 }
 
 void Window::startDrag(View *dragIcon)
@@ -314,7 +306,8 @@ void Window::mouseReleaseEvent(QMouseEvent *e)
 
 void Window::mouseMoveEvent(QMouseEvent *e)
 {
-    switch (grabState) {
+    switch (grabState)
+    {
     case NoGrab: {
         View *view = mouseView ? mouseView.data() : viewAt(e->localPos());
         sendMouseEvent(e, view);
@@ -343,20 +336,29 @@ void Window::mouseMoveEvent(QMouseEvent *e)
     }
 }
 
+// Send mouse event to the compositor
 void Window::sendMouseEvent(QMouseEvent *e, View *target)
 {
+    // Get the mouse coords
     QPointF mappedPos = e->localPos();
-    if (target)
-        mappedPos -= target->position();
+
+    // Check if view was found
+    if (target) mappedPos -= target->position();
+
+    // Create the mouse event
     QMouseEvent viewEvent(e->type(), mappedPos, e->localPos(), e->button(), e->buttons(), e->modifiers());
+
+    // Send event to the compositor
     compositor->handleMouseEvent(target, &viewEvent);
 }
 
+// Send key press event to the compositor
 void Window::keyPressEvent(QKeyEvent *e)
 {
     compositor->defaultSeat()->sendKeyPressEvent(e->nativeScanCode());
 }
 
+// Send key release event to the compositor
 void Window::keyReleaseEvent(QKeyEvent *e)
 {
     compositor->defaultSeat()->sendKeyReleaseEvent(e->nativeScanCode());
