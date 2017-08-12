@@ -4,6 +4,7 @@
 #include "capplication.h"
 #include <QBoxLayout>
 #include <QPushButton>
+#include <QTimer>
 
 class Window : public CWidget
 {
@@ -12,12 +13,22 @@ public:
     Window();
     QPushButton *mov = new QPushButton("Mover");
     QPushButton *cre = new QPushButton("Crear");
-    QPushButton *del = new QPushButton("Eliminar");
+    QPushButton *opa = new QPushButton("Opacidad");
+    QPushButton *mod = new QPushButton("Modo");
+    QPushButton *tit = new QPushButton("Title");
+    QPushButton *siz = new QPushButton("Resize");
+    QPushButton *del = new QPushButton("Delete");
     QHBoxLayout *layout = new QHBoxLayout(this);
+    QTimer *time = new QTimer(this);
 public slots:
     void moveWindow();
     void deleteWindow();
     void createWindow();
+    void changeOpacity();
+    void changeMode();
+    void changeTitle();
+    void changeSize();
+    void timeStopped();
 };
 
 #endif // WINDOW_H

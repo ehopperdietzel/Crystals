@@ -1,10 +1,10 @@
-
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QDebug>
 #include <QLocalSocket>
 #include <QWidget>
 #include <QThread>
+#include <QLabel>
 
 #ifndef SURFACE_MODES
 #define SURFACE_MODES
@@ -37,8 +37,8 @@ typedef struct{
     unsigned int role; // Surface Role
     unsigned int x; // X pos
     unsigned int y; // Y pos
-    unsigned int titleLength;
-    char title[64]; // Surface Title
+    unsigned int opacity; // Opacity
+    char title[128]; // Surface Title
 }SurfaceConfigStruct;
 
 // Send Surface Role
@@ -63,8 +63,7 @@ typedef struct{
 typedef struct{
     unsigned int type = SURFACE_TITLE; // Message type
     unsigned int id; // Surface Id
-    unsigned int titleLenght; // Title length
-    char *title; // Surface Title
+    char title[128]; // Surface Title
 }SurfaceTitleStruct;
 
 // Send Surface Opacity
@@ -72,20 +71,15 @@ typedef struct{
 typedef struct{
     unsigned int type = SURFACE_OPACITY; // Message type
     unsigned int id; // Surface Id
-    float opacity; // Surface Opacity
+    unsigned int opacity; // Surface Opacity
 }SurfaceOpacityStruct;
 
 // Send Surface blur Request
 #define SURFACE_BLUR 6
 typedef struct{
     unsigned int type = SURFACE_BLUR; // Message type
-    bool activate; // Turn ON/OFF blur
     unsigned int id; // Surface Id
-    unsigned int childId; // Surface child Id
-    int x; // X pos
-    int y; // Y pos
-    unsigned int width; // Width
-    unsigned int height; // Height
+    bool activate; // Turn ON/OFF blur
 }SurfaceBlurStruct;
 
 // Send Surface Minimize
@@ -134,12 +128,21 @@ class CWidget : public QWidget
     Q_OBJECT
 
 public:
+
+    // Constructor
     CWidget(CWidget *parent = nullptr)
     {
-        setWindowTitle(QString::number(winId()));
+        // Wrongly used to identify a surface
+        QWidget::setWindowTitle(QString::number(winId()));
+
+        // Deletes blue Qt frame
         setWindowFlags(Qt::FramelessWindowHint);
+
+        // Asigns parent
         QWidget::setParent(parent);
     }
+
+    // Assign and send position to Crystals
     void move(const QPoint &pos)
     {
         QWidget::move(pos);
@@ -151,10 +154,73 @@ public:
         positionChanged(QPoint(x,y));
     }
 
+    // Sends title to Crystals
+    void setWindowTitle(const QString &title)
+    {
+        localTitle = title;
+        titleChanged(title);
+    }
+
+    // Gets local title
+    QString windowTitle()
+    {
+        return localTitle;
+    }
+
+    // Sends surface mode
+    void setMode(unsigned int mode = WINDOW_MODE)
+    {
+        localMode = mode;
+        modeChanged(mode);
+    }
+
+    // Gets surface mode
+    unsigned int mode()
+    {
+        return localMode;
+    }
+
+    // Turn On/OFF blur
+    void setBlur(bool mode)
+    {
+        localBlur = mode;
+        blurStateChanged(mode);
+    }
+
+    // Gets blur state
+    bool blurState()
+    {
+        return localBlur;
+    }
+
+    // Set surface Opacity
+    void setWindowOpacity(uint opacity = 255)
+    {
+        localOpacity = opacity;
+        opacityChanged(opacity);
+    }
+
+    // Gets surface opacity
+    uint windowOpacity()
+    {
+        return localOpacity;
+    }
+
     bool registeredSurface = false;
 
 signals:
     void positionChanged(const QPoint &pos);
+    void titleChanged(QString);
+    void modeChanged(uint);
+    void opacityChanged(uint);
+    void blurStateChanged(bool);
+
+private:
+    QString localTitle = "";
+    uint localMode = WINDOW_MODE;
+    uint localOpacity = 255;
+    bool localBlur = false;
+    QLabel *blurImage = new QLabel(this);
 
 };
 
@@ -243,9 +309,8 @@ public slots:
                     conf.id = wid->winId();
                     conf.x = wid->pos().x();
                     conf.y = wid->pos().y();
-                    conf.role = 0;
-                    conf.titleLength = QString("CRYSTALS ES EL MEJOR COMPOSITORcaca").length();
-                    strcpy(conf.title,QString("CRYSTALS ES EL MEJOR COMPOSITORcaca").toUtf8().data());
+                    conf.role = widget->mode();
+                    strcpy(conf.title,widget->windowTitle().toUtf8());
 
                     // Copy message to a char pointer
                     char data[sizeof(SurfaceConfigStruct)];
@@ -254,7 +319,13 @@ public slots:
                     // Send message
                     socket->write(data,sizeof(SurfaceConfigStruct));
 
+                    // Connects widget's events
                     connect(widget,SIGNAL(positionChanged(QPoint)),this,SLOT(sendPosition(QPoint)));
+                    connect(widget,SIGNAL(titleChanged(QString)),this,SLOT(titleChanged(QString)));
+                    connect(widget,SIGNAL(modeChanged(uint)),this,SLOT(modeChanged(uint)));
+                    connect(widget,SIGNAL(blurStateChanged(bool)),this,SLOT(blurStateChanged(bool)));
+                    connect(widget,SIGNAL(opacityChanged(uint)),this,SLOT(opacityChanged(uint)));
+
 
                     return;
                 }
@@ -264,7 +335,6 @@ public slots:
         }
 
     }
-
 
     // Widget events
     void sendPosition(const QPoint &pos)
@@ -284,6 +354,75 @@ public slots:
         // Send message
         socket->write(data,sizeof(SurfacePosStruct));
     }
+
+    void titleChanged(QString title)
+    {
+        CWidget *widget = qobject_cast<CWidget*>(sender());
+
+        // Send surface title to Crystals
+        SurfaceTitleStruct message;
+        message.id = widget->winId();
+        strcpy(message.title,title.toUtf8());
+
+        // Copy message to a char pointer
+        char data[sizeof(SurfaceTitleStruct)];
+        memcpy(data,&message,sizeof(SurfaceTitleStruct));
+
+        // Send message
+        socket->write(data,sizeof(SurfaceTitleStruct));
+    }
+
+    void modeChanged(uint mode)
+    {
+        CWidget *widget = qobject_cast<CWidget*>(sender());
+
+        // Send surface title to Crystals
+        SurfaceRoleStruct message;
+        message.id = widget->winId();
+        message.role = mode;
+
+        // Copy message to a char pointer
+        char data[sizeof(SurfaceRoleStruct)];
+        memcpy(data,&message,sizeof(SurfaceRoleStruct));
+
+        // Send message
+        socket->write(data,sizeof(SurfaceRoleStruct));
+    }
+
+    void opacityChanged(uint opacity)
+    {
+        CWidget *widget = qobject_cast<CWidget*>(sender());
+
+        // Send surface title to Crystals
+        SurfaceOpacityStruct message;
+        message.id = widget->winId();
+        message.opacity = opacity;
+
+        // Copy message to a char pointer
+        char data[sizeof(SurfaceOpacityStruct)];
+        memcpy(data,&message,sizeof(SurfaceOpacityStruct));
+
+        // Send message
+        socket->write(data,sizeof(SurfaceOpacityStruct));
+    }
+
+    void blurStateChanged(bool mode)
+    {
+        CWidget *widget = qobject_cast<CWidget*>(sender());
+
+        // Send surface title to Crystals
+        SurfaceBlurStruct message;
+        message.id = widget->winId();
+        message.activate = mode;
+
+        // Copy message to a char pointer
+        char data[sizeof(SurfaceBlurStruct)];
+        memcpy(data,&message,sizeof(SurfaceBlurStruct));
+
+        // Send message
+        socket->write(data,sizeof(SurfaceBlurStruct));
+    }
+
 signals:
     void run();
 

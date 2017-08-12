@@ -62,13 +62,13 @@ typedef struct{
 // Configure Surface
 #define SURFACE_CONFIG 1
 typedef struct{
-    unsigned int type; // Message type
+    unsigned int type = SURFACE_CONFIG; // Message type
     unsigned int id; // Surface Id
     unsigned int role; // Surface Role
     unsigned int x; // X pos
     unsigned int y; // Y pos
-    unsigned int titleLength;
-    char title[64]; // Surface Title
+    unsigned int opacity; // Surface Opacity
+    char title[128]; // Surface Title
 }SurfaceConfigStruct;
 
 // Send Surface Role
@@ -93,8 +93,7 @@ typedef struct{
 typedef struct{
     unsigned int type = SURFACE_TITLE; // Message type
     unsigned int id; // Surface Id
-    unsigned int titleLenght; // Title length
-    char *title; // Surface Title
+    char title[128]; // Surface Title
 }SurfaceTitleStruct;
 
 // Send Surface Opacity
@@ -102,20 +101,15 @@ typedef struct{
 typedef struct{
     unsigned int type = SURFACE_OPACITY; // Message type
     unsigned int id; // Surface Id
-    float opacity; // Surface Opacity
+    unsigned int opacity; // Surface Opacity
 }SurfaceOpacityStruct;
 
 // Send Surface blur Request
 #define SURFACE_BLUR 6
 typedef struct{
     unsigned int type = SURFACE_BLUR; // Message type
-    bool activate; // Turn ON/OFF blur
     unsigned int id; // Surface Id
-    unsigned int childId; // Surface child Id
-    int x; // X pos
-    int y; // Y pos
-    unsigned int width; // Width
-    unsigned int height; // Height
+    bool activate; // Turn ON/OFF blur
 }SurfaceBlurStruct;
 
 // Send Surface Minimize

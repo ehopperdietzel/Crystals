@@ -41,6 +41,7 @@ public:
     void handleDrag(View *target, QMouseEvent *me);
 
     View *findViewById(int id);
+    View *findViewByIdAndPid(int id,int pid);
     Socket *findSocketByPId(int id);
 
 protected:

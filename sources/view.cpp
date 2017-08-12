@@ -11,31 +11,146 @@ void View::calcVertexPos()
     float h = size().height(); // View Height
     float w = size().width(); // View Width
 
+    QColor surfaceColor = QColor(255,255,255,opacity);
+
+    /* -------------- Surface -------------*/
+
+    // Top Left
+    setVertexPos(0,borderWidth,0);
+    setVertexCol(0, surfaceColor);
+
+    // Top Right
+    setVertexPos(1,w - borderWidth,0);
+    setVertexCol(1, surfaceColor);
+
+    uint index = 2;
+
+    // Right corner
+    for(float x = radius - borderWidth; x >= 0.0f ; x -= (radius - borderWidth)/radius)
+    {
+        float y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x  , 2 ));
+        setVertexCol(index,surfaceColor);
+        setVertexPos(index , w - radius + x , h - radius + y );
+        index++;
+
+    }
+
+    // Left corner
+    for(float x = 0.0f; x <= radius - borderWidth ; x += (radius - borderWidth)/radius)
+    {
+        float y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x  , 2 ));
+        setVertexCol(index,surfaceColor);
+        setVertexPos(index , radius - x , h - radius + y );
+        index++;
+
+    }
+
+    // Save surface vertex count
+    surfaceCount = index;
+
+
+
+    /* -------------- Border -------------*/
+
+
+    // Top Right less border
+    setVertexPos(index,w,0);
+    setVertexCol(index,Qt::transparent);
+    index++;
+
+    // Top Right
+    setVertexPos(index,w - borderWidth,0);
+    setVertexCol(index,surfaceColor);
+    index++;
+
+    int X = radius;
+
+    // Right corner
+    for(float x = radius - borderWidth; x >= 0.0f ; x -= (radius - borderWidth)/radius)
+    {
+        // Out
+        float y = qSqrt( qPow( radius , 2 ) - qPow( X  , 2 ));
+        setVertexCol(index,Qt::transparent);
+        setVertexPos(index , w - radius + X , h - radius + y );
+        index++;
+        X--;
+
+        // In
+        y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x  , 2 ));
+        setVertexCol(index,surfaceColor);
+        setVertexPos(index , w - radius + x , h - radius + y );
+        index++;
+
+    }
+
+    X = 0;
+    // Left corner
+    for(float x = 0.0f; x <= radius - borderWidth ; x += (radius - borderWidth)/radius)
+    {
+        // Out
+        float y = qSqrt( qPow( radius , 2 ) - qPow( X  , 2 ));
+        setVertexCol(index,Qt::transparent);
+        setVertexPos(index , radius - X , h - radius + y );
+        index++;
+        X++;
+
+        // In
+        y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x  , 2 ));
+        setVertexCol(index,surfaceColor);
+        setVertexPos(index , radius - x , h - radius + y );
+        index++;
+
+    }
+
+    // Top Right
+    setVertexPos(index,0,0);
+    setVertexCol(index,Qt::transparent);
+    index++;
+
+    // Top Left less border
+    setVertexPos(index,borderWidth,0);
+    setVertexCol(index,surfaceColor);
+    index++;
+
+
+
+    borderCount = index - surfaceCount;
+
+
+
+
+
+
+
+    /*
+
     // Set all vertex white
     for(int i = 0; i<14; i++)
-        setVertexCol(i,Qt::white);
+        setVertexCol(i,surfaceColor);
 
     // Top Square ( Triangle Strip 0-7 )
-    setVertexPos(0,0,0);
-    setVertexPos(1,0,h - radius);
-    setVertexPos(2,borderWidth,0);
-    setVertexPos(3,borderWidth,h - radius);
-    setVertexPos(4,w - borderWidth,0);
-    setVertexPos(5,w - borderWidth,h - radius);
-    setVertexPos(6,w,0);
-    setVertexPos(7,w,h-radius);
+    setVertexPos(0,0,0); // Top Left For border
+    setVertexPos(1,0,h - radius); // Bottom left for border
+
+    setVertexPos(2,borderWidth,0); // Top Left
+    setVertexPos(3,borderWidth,h - radius); // Bottom left
+    setVertexPos(4,w - borderWidth,0); // Top Right
+    setVertexPos(5,w - borderWidth,h - radius); // Bottom Right
+
+    setVertexPos(6,w,0); // Top Right for border
+    setVertexPos(7,w,h-radius); // Bottom Right for border
 
     topQuadCount = 8;
 
-    // Bottom Square ( Triangle Strip 8-13 )
-    setVertexPos(8,radius,h-radius); // Left Corner Center
-    setVertexPos(9,w-radius,h-radius); // Right Corner Center
-    setVertexPos(10,radius,h-borderWidth);
-    setVertexPos(11,w-radius,h-borderWidth);
-    setVertexPos(12,radius,h);
-    setVertexPos(13,w-radius,h);
 
-    bottomQuadCount = 6;
+    // Bottom Border ( Triangle Strip 8-11 )
+
+    setVertexPos(8,w - radius,h - borderWidth); // Top right
+    setVertexPos(9,radius,h - borderWidth); // Top left
+    setVertexPos(10,w - radius,h); // Bottom right for border
+    setVertexPos(11,radius,h - borderWidth); // Bottom left for border
+
+    bottomQuadCount = 4;
 
     // Set transparent vertices
     setVertexCol(0,Qt::transparent);
@@ -43,34 +158,34 @@ void View::calcVertexPos()
     setVertexCol(6,Qt::transparent);
     setVertexCol(7,Qt::transparent);
 
-    setVertexCol(12,Qt::transparent);
-    setVertexCol(13,Qt::transparent);
+    setVertexCol(10,Qt::transparent);
+    setVertexCol(11,Qt::transparent);
 
+    // Left Corner Center
+    setVertexPos(12,radius,h-radius);
+    setVertexCol(12, surfaceColor);
 
-    // Bottom Left border radius
-    setVertexPos(14,radius,h-radius); // Left Corner Center
-    setVertexCol(14, Qt::white);
-
-    int index = 15;
+    int index = 13;
     cornerCount = 0;
 
+    // Left corner
     for(float x = 0; x <= radius; x+=1.0f/cornerQuality)
     {
         float y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x - radius , 2 ));
         setVertexPos( index, x , y + (h - radius) );
-        setVertexCol( index, Qt::white);
+        setVertexCol( index, surfaceColor);
         index++;
         cornerCount++;
     }
 
-    // Bottom Right border radius
-    setVertexPos(index,radius,h-radius); // Right Corner Center
+    // Right Corner Center
+    setVertexPos(index,w - radius,h - radius);
     index++;
 
     for(float x = 0; x <= radius; x+=1.0f/cornerQuality)
     {
         float y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x , 2 ));
-        setVertexCol(index,Qt::white);
+        setVertexCol(index,surfaceColor);
         setVertexPos(index , x + (w - radius) , y + (h - radius) );
         index++;
     }
@@ -81,7 +196,7 @@ void View::calcVertexPos()
     {
         float y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x - radius , 2 ));
         setVertexPos( index, x , y + (h - radius) );
-        setVertexCol( index, Qt::white);
+        setVertexCol( index, surfaceColor);
         index++;
 
         y = qSqrt( qPow( radius, 2 ) - qPow( x - radius , 2 ));
@@ -94,7 +209,7 @@ void View::calcVertexPos()
     for(float x = 0; x <= radius; x+=1.0f/cornerQuality)
     {
         float y = qSqrt( qPow( radius - borderWidth , 2 ) - qPow( x , 2 ));
-        setVertexCol(index,Qt::white);
+        setVertexCol(index,surfaceColor);
         setVertexPos(index , x + (w - radius) , y + (h - radius) );
         index++;
 
@@ -103,7 +218,7 @@ void View::calcVertexPos()
         setVertexPos(index , x + (w - radius) , y + (h - radius) );
         index++;
     }
-
+    */
 }
 
 

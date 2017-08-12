@@ -15,20 +15,20 @@ public:
 
     View(Compositor *compositor); // Constructor
 
+    // OpenGL variables
     Vertex vertices[256]; // Vertex list
-
     float zIndex = 0.01f; // Z-Position in OpenGL Coords
-    unsigned radius = 10; // Size of radius
+    float radius = 15.0f; // Size of radius
+    uint borderWidth = 1; // Smooth border width
+    uint surfaceCount, borderCount; // Amount of used vertices
 
-    unsigned int borderWidth = 1; // Smooth border width
-    unsigned int cornerQuality = 1; // Corner Radius Quiality ( Subdividitions )
-    unsigned int topQuadCount, bottomQuadCount, cornerCount; // Amount of used vertices
-    unsigned int mode = WINDOW_MODE;
-
-    QString title = "";
+    // Surface configuration
+    uint role = WINDOW_MODE; // Surface role
+    uint opacity = 255; // Surface Opacity
+    QString title = ""; // Surface Title
     int surfaceId = -1; // Surface ID
 
-
+    // OpenGL functions
     void calcVertexPos(); // Calculates all the vertex positions and colors of the view
     void setVertexCol(int index, QColor color); // Assign color to a vertex
     void setVertexPos(int index, float x, float y); // Assign position to a vertex
@@ -47,7 +47,8 @@ public:
     QPointF m_position;
     View *m_parentView;
 
-    QSize previusSize;
+
+    QSize previusSize; // For not recalc vertex positions
 
 
 };

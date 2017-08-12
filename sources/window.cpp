@@ -141,12 +141,13 @@ void Window::drawView(View *view)
     // Sends the vertices list
     glBufferData(GL_ARRAY_BUFFER, sizeof(view->vertices), view->vertices, GL_STATIC_DRAW);
 
-    // Draw view
-    glDrawArrays(GL_TRIANGLE_STRIP,0,view->topQuadCount);
-    glDrawArrays(GL_TRIANGLE_STRIP,view->topQuadCount, view->bottomQuadCount);
-    glDrawArrays(GL_TRIANGLE_FAN,view->topQuadCount + view->bottomQuadCount, view->cornerCount*2 + 2);
-    glDrawArrays(GL_TRIANGLE_STRIP,view->topQuadCount + view->bottomQuadCount + view->cornerCount*2 + 2, view->cornerCount*2);
-    glDrawArrays(GL_TRIANGLE_STRIP,view->topQuadCount + view->bottomQuadCount + view->cornerCount*4 + 2, view->cornerCount*2);
+    // ---> Draw Surface
+
+    // Draw Surface
+    glDrawArrays(GL_TRIANGLE_FAN,0, view->surfaceCount);
+
+    // Draw borders
+    glDrawArrays(GL_TRIANGLE_STRIP,view->surfaceCount, view->borderCount);
 }
 
 

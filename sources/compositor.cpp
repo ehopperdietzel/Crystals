@@ -81,28 +81,74 @@ void Compositor::newClientMessage()
             view->setPosition(QPointF(message->x,message->y));
 
             // Assign role
-            view->mode = message->role;
+            view->role = message->role;
 
-            qDebug() << message->title;
+            // Assign title
+            view->title = message->title;
+
+            // Render
+            triggerRender();
+
+            qDebug() << "Surface Title Changed";
 
         }break;
 
-        // Register a surface
+        // Change surface role
+        case SURFACE_ROLE:{
+
+            // Parse the message
+            SurfaceRoleStruct *msg = (SurfaceRoleStruct*)data.data();
+
+            // Find equivalent view
+            View *view = findViewByIdAndPid(msg->id,socket->processID);
+
+            // Set role
+            view->role = msg->role;
+
+            // Render
+            triggerRender();
+
+            qDebug() << "Surface Role Changed";
+        }break;
+
+        // Change surface position
         case SURFACE_POS:{
 
-            // Parse the message again
+            // Parse the message
             SurfacePosStruct *msg = (SurfacePosStruct*)data.data();
 
             // Find equivalent view
-            Q_FOREACH (View* view, views) {
-                if (view->surfaceId == msg->id && socket->processID == view->surface()->client()->processId())
-                {
-                    qDebug()<<QString::number(msg->id)+" Surface Pos Changed to ("+QString::number(msg->x)+","+QString::number(msg->y)+")";
-                    view->setPosition(QPointF(msg->x,msg->y));
-                    triggerRender();
-                    return;
-                }
-            }
+            View *view = findViewByIdAndPid(msg->id,socket->processID);
+
+            // Set position
+            view->setPosition(QPointF(msg->x,msg->y));
+
+            // Render
+            triggerRender();
+
+            qDebug() << "Surface Position Changed";
+
+        }break;
+
+        // Change surface opacity
+        case SURFACE_OPACITY:{
+
+            // Parse the message
+            SurfaceOpacityStruct *msg = (SurfaceOpacityStruct*)data.data();
+
+            // Find equivalent view
+            View *view = findViewByIdAndPid(msg->id,socket->processID);
+
+            // Set opacity
+            view->opacity = msg->opacity;
+
+            // Recalculates vertices
+            view->calcVertexPos();
+
+            // Render
+            triggerRender();
+
+            qDebug() << "Surface Opacity Changed to ";
 
         }break;
     }
@@ -324,6 +370,15 @@ View *Compositor::findViewById(int id)
     Q_FOREACH(View *view,views)
     {
         if(view->surfaceId == id)
+            return view;
+    }
+}
+
+View *Compositor::findViewByIdAndPid(int id, int pid)
+{
+    // Find equivalent view
+    Q_FOREACH (View* view, views) {
+        if (view->surfaceId == id && pid == view->surface()->client()->processId())
             return view;
     }
 }
