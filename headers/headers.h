@@ -148,6 +148,13 @@ typedef struct{
     unsigned int id; // Message type
 }RegisteredSurfaceStruct;
 
+// Surface Blur Image
+#define SURFACE_BLUR_IMAGE 2
+typedef struct{
+    unsigned int type = SURFACE_BLUR_IMAGE; // Message type
+    unsigned int id; // Surface desitnation
+    unsigned int image[4*4][3]; // 8x8 image
+}SurfaceBlurImageStruct;
 
 #endif
 

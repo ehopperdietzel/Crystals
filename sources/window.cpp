@@ -1,5 +1,6 @@
 #include "headers/window.h"
 #include "headers/compositor.h"
+#include <QImage>
 
 Window::Window(Compositor *comp)
 {
@@ -12,8 +13,11 @@ Window::Window(Compositor *comp)
     // Drag event
     connect(compositor, &Compositor::dragStarted, this, &Window::startDrag);
 
+    // Set screen
+    QWindow::setScreen(QGuiApplication::primaryScreen());
+
     // Show window
-    show();
+    QWindow::show();
 }
 
 void Window::initShaders()
@@ -118,13 +122,38 @@ void Window::drawView(View *view)
         view->calcVertexPos();
     }
 
+    if(view->previusSize != view->size() || view->previusPosition != view->position())
+    {
+        view->blurChanged = true;
+    }
 
-    // Gets background screenshot
-    /*
-    unsigned char pixels[4];
-    glReadPixels(view->position().x(),view->position().y(),1,1,GL_RGB,GL_UNSIGNED_BYTE,&pixels);
-    qDebug()<<pixels[0];
-    */
+    if(view->blur && view->blurChanged)
+    {
+
+        SurfaceBlurImageStruct msg;
+        msg.id = view->surfaceId;
+        unsigned char p[4];
+        int w = view->size().width() / 4;
+        int h = view->size().height() / 4;
+        uint i = 0;
+        for(int y = 0; y < 4;y++){
+            for(int x = 0; x < 4;x++){
+                glReadPixels(this->width() - view->position().x() + (x*w),this->height() - view->position().y() + (y*h),1,1,GL_RGBA,GL_UNSIGNED_BYTE,p);
+                int r = p[0];
+                int g = p[1];
+                int b = p[2];
+                msg.image[i][0] = r;
+                msg.image[i][1] = g;
+                msg.image[i][2] = b;
+                i++;
+            }
+        }
+        compositor->sendBlurImage(view,msg);
+        view->blurChanged = false;
+    }
+
+
+
 
     // Tells OpenGL it is not the background
     glUniform1ui(isBackgroundUniform,false);
@@ -148,6 +177,9 @@ void Window::drawView(View *view)
 
     // Draw borders
     glDrawArrays(GL_TRIANGLE_STRIP,view->surfaceCount, view->borderCount);
+
+
+    view->previusPosition = view->position();
 }
 
 

@@ -1,10 +1,11 @@
 #include "headers/compositor.h"
 
+#include <QProcess>
+#include <QScreen>
 Compositor::Compositor():QWaylandCompositor()
 {
     create();
-
-    setScreenResolution(QSize(1500,800));
+    setScreenResolution(QGuiApplication::primaryScreen()->size());
     server->removeServer("com.cuarzo.crystals");
     server->listen("com.cuarzo.crystals");
 
@@ -18,6 +19,7 @@ Compositor::Compositor():QWaylandCompositor()
 
     connect(server,SIGNAL(newConnection()),this,SLOT(newClientConnected()));
 
+    QProcess::startDetached(QGuiApplication::applicationDirPath()+ "/../Demo/./DemoApp -platform wayland");
 }
 
 // New client Unix socket
@@ -149,6 +151,25 @@ void Compositor::newClientMessage()
             triggerRender();
 
             qDebug() << "Surface Opacity Changed to ";
+
+        }break;
+
+        // Blur request
+        case SURFACE_BLUR:{
+
+            // Parse the message
+            SurfaceBlurStruct *msg = (SurfaceBlurStruct*)data.data();
+
+            // Find equivalent view
+            View *view = findViewByIdAndPid(msg->id,socket->processID);
+
+            // Set opacity
+            view->blur = msg->activate;
+
+            // Render
+            triggerRender();
+
+            qDebug() << "Surface Blur Activated";
 
         }break;
     }
@@ -430,4 +451,18 @@ void Compositor::setScreenResolution(QSize size)
     QWaylandOutputMode mode = QWaylandOutputMode(size, 60000);
     output->addMode(mode, true);
     output->setCurrentMode(mode);
+}
+
+void Compositor::sendBlurImage(View *view, SurfaceBlurImageStruct msg)
+{
+    // Find socket
+    Socket *socket = findSocketByPId(view->surface()->client()->processId());
+
+    // Copy message to a char pointer
+    char data[sizeof(SurfaceBlurImageStruct)];
+    memcpy(data,&msg,sizeof(SurfaceBlurImageStruct));
+
+    // Send message
+    socket->socket->write(data,sizeof(SurfaceBlurImageStruct));
+
 }

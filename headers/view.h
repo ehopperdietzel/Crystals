@@ -27,6 +27,8 @@ public:
     uint opacity = 255; // Surface Opacity
     QString title = ""; // Surface Title
     int surfaceId = -1; // Surface ID
+    bool blur = false; // Surface Blur
+    bool blurChanged = false;
 
     // OpenGL functions
     void calcVertexPos(); // Calculates all the vertex positions and colors of the view
@@ -44,7 +46,7 @@ public:
 
     Compositor *compositor;
     QOpenGLTexture *texture;
-    QPointF m_position;
+    QPointF m_position, previusPosition;
     View *m_parentView;
 
 

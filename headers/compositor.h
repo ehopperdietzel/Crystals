@@ -36,6 +36,9 @@ public:
     void raise(View *view);
     void setScreenResolution(QSize size);
 
+    // Send client events
+    void sendBlurImage(View *view, SurfaceBlurImageStruct msg);
+
     void handleMouseEvent(QWaylandView *target, QMouseEvent *me);
     void handleResize(View *target, const QSize &initialSize, const QPoint &delta, int edge);
     void handleDrag(View *target, QMouseEvent *me);

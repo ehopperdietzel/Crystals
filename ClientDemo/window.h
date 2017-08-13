@@ -15,6 +15,7 @@ public:
     QPushButton *cre = new QPushButton("Crear");
     QPushButton *opa = new QPushButton("Opacidad");
     QPushButton *mod = new QPushButton("Modo");
+    QPushButton *blu = new QPushButton("Blur");
     QPushButton *tit = new QPushButton("Title");
     QPushButton *siz = new QPushButton("Resize");
     QPushButton *del = new QPushButton("Delete");
@@ -24,6 +25,7 @@ public slots:
     void moveWindow();
     void deleteWindow();
     void createWindow();
+    void activateBlur();
     void changeOpacity();
     void changeMode();
     void changeTitle();

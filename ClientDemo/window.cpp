@@ -2,12 +2,14 @@
 
 Window::Window()
 {
-  setStyleSheet("font-family:Lato;background:red");
-  move(100,100);
+  setStyleSheet("font-family:Lato");
+  move(400,400);
+  resize(500,500);
   connect(mov,SIGNAL(pressed()),this,SLOT(moveWindow()));
   connect(cre,SIGNAL(pressed()),this,SLOT(createWindow()));
   connect(del,SIGNAL(pressed()),this,SLOT(deleteWindow()));
   connect(mod,SIGNAL(pressed()),this,SLOT(changeMode()));
+  connect(blu,SIGNAL(pressed()),this,SLOT(activateBlur()));
   connect(opa,SIGNAL(pressed()),this,SLOT(changeOpacity()));
   connect(tit,SIGNAL(pressed()),this,SLOT(changeTitle()));
   connect(siz,SIGNAL(pressed()),this,SLOT(changeSize()));
@@ -16,18 +18,24 @@ Window::Window()
   layout->addWidget(siz);
   layout->addWidget(cre);
   layout->addWidget(mod);
+  layout->addWidget(blu);
   layout->addWidget(opa);
   layout->addWidget(tit);
   layout->addWidget(del);
 }
 void Window::moveWindow()
 {
-    time->start(0);
+    move(pos() + QPoint(30,30));
 }
 void Window::createWindow()
 {
     Window *w = new Window();
     w->show();
+}
+
+void Window::activateBlur()
+{
+    setBlur(true);
 }
 
 void Window::changeOpacity()

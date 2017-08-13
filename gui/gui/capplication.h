@@ -1,12 +1,10 @@
 #include <QApplication>
 #include <QDesktopWidget>
-#include <QGraphicsBlurEffect>
 #include <QDebug>
 #include <QLocalSocket>
 #include <QWidget>
 #include <QThread>
 #include <QLabel>
-#include <QPicture>
 
 #ifndef SURFACE_MODES
 #define SURFACE_MODES
@@ -116,14 +114,6 @@ typedef struct{
     unsigned int id; // Message type
 }RegisteredSurfaceStruct;
 
-// Surface Blur Image
-#define SURFACE_BLUR_IMAGE 2
-typedef struct{
-    unsigned int type; // Message type
-    unsigned int id; // Surface desitnation
-    unsigned int image[4*4][3]; // 8x8 image
-}SurfaceBlurImageStruct;
-
 #endif
 
 
@@ -150,14 +140,6 @@ public:
 
         // Asigns parent
         QWidget::setParent(parent);
-
-        // Configure blur
-        blurImage->hide();
-        blurEffect->setEnabled(false);
-        blurEffect->setBlurRadius(20);
-        blurImage->setScaledContents(true);
-        blurImage->setGraphicsEffect(blurEffect);
-
     }
 
     // Assign and send position to Crystals
@@ -165,13 +147,11 @@ public:
     {
         QWidget::move(pos);
         positionChanged(pos);
-        blurArrived();
     }
     void move(int x, int y)
     {
         QWidget::move(x,y);
         positionChanged(QPoint(x,y));
-        blurArrived();
     }
 
     // Sends title to Crystals
@@ -185,20 +165,6 @@ public:
     QString windowTitle()
     {
         return localTitle;
-    }
-
-    // Resize
-    void resize(const QSize &size)
-    {
-        QWidget::resize(size);
-        blurArrived();
-    }
-
-    // Resize
-    void resize(int x, int y)
-    {
-        QWidget::resize(x,y);
-        blurArrived();
     }
 
     // Sends surface mode
@@ -219,29 +185,12 @@ public:
     {
         localBlur = mode;
         blurStateChanged(mode);
-        blurEffect->setEnabled(mode);
-        if(mode)
-        {
-            blurArrived();
-            blurImage->show();
-        }
-        else
-        {
-            blurImage->hide();
-        }
     }
 
     // Gets blur state
     bool blurState()
     {
         return localBlur;
-    }
-
-    // Refresh blur properties
-    void blurArrived()
-    {
-        blurImage->move(0,0);
-        blurImage->resize(size());
     }
 
     // Set surface Opacity
@@ -258,7 +207,6 @@ public:
     }
 
     bool registeredSurface = false;
-    QLabel *blurImage = new QLabel(this);
 
 signals:
     void positionChanged(const QPoint &pos);
@@ -272,9 +220,7 @@ private:
     uint localMode = WINDOW_MODE;
     uint localOpacity = 255;
     bool localBlur = false;
-    QGraphicsBlurEffect *blurEffect = new QGraphicsBlurEffect();
-
-
+    QLabel *blurImage = new QLabel(this);
 
 };
 
@@ -313,7 +259,6 @@ public:
     }
 
     QLocalSocket *socket = new QLocalSocket(this); // Unix socket
-    QImage blur = QImage(QSize(4,4),QImage::Format_RGB16);
 
 public slots:
 
@@ -382,38 +327,6 @@ public slots:
                     connect(widget,SIGNAL(opacityChanged(uint)),this,SLOT(opacityChanged(uint)));
 
 
-                    return;
-                }
-
-            }
-        }break;
-        case SURFACE_BLUR_IMAGE:{
-
-            // Parse Message
-            SurfaceBlurImageStruct *reply = (SurfaceBlurImageStruct*)message.data();
-
-            // Search the registered widget
-            Q_FOREACH(QWidget *wid,allWidgets())
-            {
-                if(wid->winId() == reply->id)
-                {
-                    CWidget *widget = qobject_cast<CWidget*>(wid);
-
-
-                    int i = 0;
-                    for(int y = 0; y<4 ;y++)
-                    {
-                        for(int x = 0; x<4 ;x++)
-                        {
-                            uint r = reply->image[i][0];
-                            uint g = reply->image[i][1];
-                            uint b = reply->image[i][2];
-                            blur.setPixelColor(x,y,QColor(r,g,b));
-                            i++;
-                        }
-                    }
-                    widget->blurImage->setPixmap(QPixmap::fromImage(blur));
-                    widget->blurArrived();
                     return;
                 }
 

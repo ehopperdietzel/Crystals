@@ -59,7 +59,6 @@ private:
     void drawView(View *view);
     void sendMouseEvent(QMouseEvent *e, View *target);
 
-
     Compositor *compositor;
     QPointer<View> mouseView;
     GrabState grabState = NoGrab;
