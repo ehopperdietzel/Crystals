@@ -40,10 +40,23 @@ private:
     QOpenGLShaderProgram program;
     GLuint vertexBuffer, indexBuffer;
 
+    // Offscreen buffer
+    GLuint offscreenBuffer = 0;
+    GLuint offscreenTexture;
+
+    // Blur buffer
+    GLuint blurBuffer = 0;
+    GLuint blurTexture;
+
+    Vertex vertices[4];
+
     // OpenGL Variables Location
     GLuint screenSizeUniform; // Screen Size ( pixels )
+    GLuint textureSizeUniform; // Texture Size ( pixels )
+    GLuint textureUniform; // Texture Id
+    GLuint shaderModeUniform; // Drawing Mode
+    GLuint invertUniform; // Texture Invert
     GLuint offsetUniform; // View Position
-    GLuint isBackgroundUniform; // Check if is drawing background
     GLuint viewSizeUniform; // View Size ( pixels )
     GLuint posSlot; // Vertex  pos
     GLuint colSlot; // Vertex  col
@@ -62,7 +75,7 @@ private:
     Compositor *compositor;
     QPointer<View> mouseView;
     GrabState grabState = NoGrab;
-    QSize initialSize;
+    QSize initialSize, blurSize;
     int resizeEdge;
     bool resizeAnchored;
     QPointF resizeAnchorPosition, mouseOffset, initialMousePos;

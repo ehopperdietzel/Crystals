@@ -1,6 +1,7 @@
 #include "headers/window.h"
 #include "headers/compositor.h"
 #include <QImage>
+#include <QtOpenGL/qglfunctions.h>
 
 Window::Window(Compositor *comp)
 {
@@ -53,7 +54,10 @@ void Window::initShaders()
 
     // Get shader uniforms locations
     screenSizeUniform   = glGetUniformLocation(program.programId(), "screenSize");
-    isBackgroundUniform = glGetUniformLocation(program.programId(), "isBackground");
+    textureSizeUniform  = glGetUniformLocation(program.programId(), "textureSize");
+    textureUniform      = glGetUniformLocation(program.programId(), "Texture");
+    invertUniform       = glGetUniformLocation(program.programId(), "inverted");
+    shaderModeUniform   = glGetUniformLocation(program.programId(), "Mode");
     offsetUniform       = glGetUniformLocation(program.programId(), "viewOffset");
     viewSizeUniform     = glGetUniformLocation(program.programId(), "viewSize");
 
@@ -62,6 +66,45 @@ void Window::initShaders()
 
 void Window::initializeGL()
 {
+    glEnable(GL_TEXTURE_2D);
+
+    // Create offscreen texture
+    glGenTextures(1,&offscreenTexture);
+    glBindTexture(GL_TEXTURE_2D, offscreenTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    // Create the offscreen buffer
+    glGenFramebuffers(1, &offscreenBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, offscreenBuffer);
+
+    // Set offscreen texture as our colour attachement
+    glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,offscreenTexture,0);
+
+    // Set the list of draw buffers.
+    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1, DrawBuffers);
+
+
+
+    // Create blur texture
+    glGenTextures(1,&blurTexture);
+    glBindTexture(GL_TEXTURE_2D, blurTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+    // Create the offscreen buffer
+    glGenFramebuffers(1, &blurBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, blurBuffer);
+
+    // Set offscreen texture as our colour attachement
+    glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,blurTexture,0);
+
+    // Set the list of draw buffers.
+    glDrawBuffers(1, DrawBuffers);
+
+
+
     // Create a vertex buffer
     glGenBuffers(1, &vertexBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
@@ -70,14 +113,11 @@ void Window::initializeGL()
     glGenBuffers(1, &indexBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer);
 
-    // Sets the active texture location
-    glActiveTexture(GL_TEXTURE0);
-
     // Send the triangles indices list for the background
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(background->Indices), background->Indices, GL_STATIC_DRAW);
 
     // Set default background image
-    setBackground("/home/e/wallpaper.jpg");
+    setBackground("/home/e/wp.png");
 
     // Set default background color
     background->setColor(Qt::white);
@@ -96,17 +136,29 @@ void Window::initializeGL()
 
 void Window::drawBackground()
 {
-    // Tells OpenGL it is the background
-    glUniform1ui(isBackgroundUniform,true);
+    // Binds offscren fb
+    glBindFramebuffer(GL_FRAMEBUFFER,offscreenBuffer);
 
-    // Selects the background texture
+    // Selects background texture
     glBindTexture(GL_TEXTURE_2D, background->texture->textureId());
+
+    // Set OpenGL to background mode
+    glUniform1i(shaderModeUniform,2);
+
+    // Tells OpenGL it is the background
+    glUniform2f(textureSizeUniform,background->texture->width(),background->texture->height());
 
     // Send the vertex list
     glBufferData(GL_ARRAY_BUFFER, sizeof(background->vertices), background->vertices, GL_STATIC_DRAW);
 
     //Draw Background
     glDrawElements(GL_TRIANGLES, sizeof(GLubyte)*6,GL_UNSIGNED_BYTE, 0);
+
+    // Binds main fb
+    //glBindFramebuffer(GL_FRAMEBUFFER,0);
+
+    //Draw Background
+    //glDrawElements(GL_TRIANGLES, sizeof(GLubyte)*6,GL_UNSIGNED_BYTE, 0);
 }
 
 void Window::drawView(View *view)
@@ -122,41 +174,6 @@ void Window::drawView(View *view)
         view->calcVertexPos();
     }
 
-    if(view->previusSize != view->size() || view->previusPosition != view->position())
-    {
-        view->blurChanged = true;
-    }
-
-    if(view->blur && view->blurChanged)
-    {
-
-        SurfaceBlurImageStruct msg;
-        msg.id = view->surfaceId;
-        unsigned char p[4];
-        int w = view->size().width() / 4;
-        int h = view->size().height() / 4;
-        uint i = 0;
-        for(int y = 0; y < 4;y++){
-            for(int x = 0; x < 4;x++){
-                glReadPixels(this->width() - view->position().x() + (x*w),this->height() - view->position().y() + (y*h),1,1,GL_RGBA,GL_UNSIGNED_BYTE,p);
-                int r = p[0];
-                int g = p[1];
-                int b = p[2];
-                msg.image[i][0] = r;
-                msg.image[i][1] = g;
-                msg.image[i][2] = b;
-                i++;
-            }
-        }
-        compositor->sendBlurImage(view,msg);
-        view->blurChanged = false;
-    }
-
-
-
-
-    // Tells OpenGL it is not the background
-    glUniform1ui(isBackgroundUniform,false);
 
     // Tells OpenGL the view position
     glUniform2f(offsetUniform,view->position().x(),view->position().y());
@@ -164,19 +181,71 @@ void Window::drawView(View *view)
     // Tells OpenGL the view size
     glUniform2f(viewSizeUniform,view->size().width(),view->size().height());
 
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // Draws Background blur
+    if(true){
+
+
+        // Set OpenGL to vblur mode
+        glUniform1i(shaderModeUniform,SHADER_HBLUR);
+
+        // Set white colors
+        for(int i = 0; i<4; i++)
+        {
+            vertices[i].color[0] = 1.0f;
+            vertices[i].color[1] = 1.0f;
+            vertices[i].color[2] = 1.0f;
+            vertices[i].color[3] = 1.0f;
+        }
+
+        // Set positions
+        vertices[0].position[0] = -1.0f;
+        vertices[0].position[1] =  1.0f;
+        vertices[0].position[2] = view->zIndex;
+        vertices[1].position[0] = -1.0f;
+        vertices[1].position[1] = -1.0f;
+        vertices[1].position[2] = view->zIndex;
+        vertices[2].position[0] =  1.0f;
+        vertices[2].position[1] =  0.0f;
+        vertices[2].position[2] = view->zIndex;
+        vertices[3].position[0] =  1.0f;
+        vertices[3].position[1] =  1.0f;
+        vertices[3].position[2] = view->zIndex;
+
+        vertices[0].texture[0] = 0.0f;
+        vertices[0].texture[1] = 1.0f;
+        vertices[1].texture[0] = 0.0f;
+        vertices[1].texture[1] = 0.0f;
+        vertices[2].texture[0] = 1.0f;
+        vertices[2].texture[1] = 0.0f;
+        vertices[3].texture[0] = 1.0f;
+        vertices[3].texture[1] = 1.0f;
+
+        glBindTexture(GL_TEXTURE_2D, offscreenBuffer);
+
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        glDrawArrays(GL_TRIANGLE_FAN,0,4);
+    }
+
+    // Set OpenGL to vblur mode
+    glUniform1i(shaderModeUniform,SHADER_NORMAL);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(view->vertices), view->vertices, GL_STATIC_DRAW);
+
     // Select current view texture
     glBindTexture(GL_TEXTURE_2D, view->getTexture()->textureId());
 
     // Sends the vertices list
     glBufferData(GL_ARRAY_BUFFER, sizeof(view->vertices), view->vertices, GL_STATIC_DRAW);
 
-    // ---> Draw Surface
-
     // Draw Surface
-    glDrawArrays(GL_TRIANGLE_FAN,0, view->surfaceCount);
+    //glDrawArrays(GL_TRIANGLE_FAN,0, view->surfaceCount);
 
     // Draw borders
-    glDrawArrays(GL_TRIANGLE_STRIP,view->surfaceCount, view->borderCount);
+    //glDrawArrays(GL_TRIANGLE_STRIP,view->surfaceCount, view->borderCount);
+
 
 
     view->previusPosition = view->position();
@@ -249,7 +318,6 @@ void Window::paintGL()
             }
         }
     }
-
     // Finishes rendering
     compositor->endRender();
 }
@@ -259,6 +327,14 @@ void Window::resizeGL(int, int)
     // Adjust background
     if(background->viewMode == Image)
         background->setImageMode(background->imageMode);
+
+    // Selects offscreen texture
+    glBindTexture(GL_TEXTURE_2D, offscreenTexture);
+
+    // Sets texture size
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA, width(), height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+    glViewport(0,0,width(),height());
 }
 
 View *Window::viewAt(const QPointF &point)

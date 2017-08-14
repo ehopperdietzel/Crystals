@@ -221,6 +221,11 @@ void View::calcVertexPos()
     */
 }
 
+void View::calcRectPos()
+{
+
+}
+
 
 void View::setVertexCol(int index, QColor color)
 {

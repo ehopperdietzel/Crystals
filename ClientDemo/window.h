@@ -21,6 +21,13 @@ public:
     QPushButton *del = new QPushButton("Delete");
     QHBoxLayout *layout = new QHBoxLayout(this);
     QTimer *time = new QTimer(this);
+    bool movee = false;
+    void mouseMoveEvent(QMouseEvent *event)
+    {
+        if(movee)
+        move(QCursor::pos()+QPoint(-100,-100));
+    }
+
 public slots:
     void moveWindow();
     void deleteWindow();

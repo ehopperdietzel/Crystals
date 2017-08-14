@@ -153,7 +153,9 @@ typedef struct{
 typedef struct{
     unsigned int type = SURFACE_BLUR_IMAGE; // Message type
     unsigned int id; // Surface desitnation
-    unsigned int image[4*4][3]; // 8x8 image
+    unsigned int width; // Pixels
+    unsigned int height; // Pixels
+    unsigned char pixels[4*64*64]; // 64x64 Image (RGBA 255)
 }SurfaceBlurImageStruct;
 
 #endif
@@ -181,5 +183,10 @@ enum MessageType{ Caca };
 // View type
 enum ViewType{ Paradiso, TitleBar, Roller };
 
+// Selected Shader Mode
+#define SHADER_NORMAL 0
+#define SHADER_BACKGROUND 1
+#define SHADER_HBLUR 2
+#define SHADER_VBLUR 3
 
 #endif

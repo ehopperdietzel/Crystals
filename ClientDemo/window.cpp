@@ -22,10 +22,11 @@ Window::Window()
   layout->addWidget(opa);
   layout->addWidget(tit);
   layout->addWidget(del);
+  setMouseTracking(true);
 }
 void Window::moveWindow()
 {
-    move(pos() + QPoint(30,30));
+    movee = true;
 }
 void Window::createWindow()
 {

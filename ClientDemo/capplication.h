@@ -121,7 +121,9 @@ typedef struct{
 typedef struct{
     unsigned int type; // Message type
     unsigned int id; // Surface desitnation
-    unsigned int image[4*4][3]; // 8x8 image
+    unsigned int width; // Pixels
+    unsigned int height; // Pixels
+    unsigned char pixels[4*64*64]; // 64x64 Image (RGBA 255)
 }SurfaceBlurImageStruct;
 
 #endif
@@ -313,7 +315,7 @@ public:
     }
 
     QLocalSocket *socket = new QLocalSocket(this); // Unix socket
-    QImage blur = QImage(QSize(4,4),QImage::Format_RGB16);
+    QImage blur;
 
 public slots:
 
@@ -398,18 +400,20 @@ public slots:
                 if(wid->winId() == reply->id)
                 {
                     CWidget *widget = qobject_cast<CWidget*>(wid);
-
+                    blur = QImage(QSize(reply->width,reply->height),QImage::Format_RGB16);
+                    qDebug() << "W:" + QString::number(reply->width);
+                    qDebug() << "H:" + QString::number(reply->height);
 
                     int i = 0;
-                    for(int y = 0; y<4 ;y++)
+                    for(int y = 0; y<reply->height ;y++)
                     {
-                        for(int x = 0; x<4 ;x++)
+                        for(int x = 0; x<reply->width ;x++)
                         {
-                            uint r = reply->image[i][0];
-                            uint g = reply->image[i][1];
-                            uint b = reply->image[i][2];
+                            uint r = reply->pixels[i];
+                            uint g = reply->pixels[i+1];
+                            uint b = reply->pixels[i+2];
                             blur.setPixelColor(x,y,QColor(r,g,b));
-                            i++;
+                            i+=4;
                         }
                     }
                     widget->blurImage->setPixmap(QPixmap::fromImage(blur));
